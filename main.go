@@ -40,20 +40,20 @@ func main() {
 	/* exporter for prometheus */
 	m := chiprometheus.NewMiddleware(appName)
 
-	v := chi.NewRouter()
+	r := chi.NewRouter()
 	// r.Use(middleware.Logger)
-	v.Use(middleware.RequestID)
-	v.Use(middleware.Timeout(60 * time.Second))
-	v.Use(httplog.RequestLogger(httpLogger))
-	v.Use(m)
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(httplog.RequestLogger(httpLogger))
+	r.Use(m)
 
-	v.Handle("/metrics", promhttp.Handler())
+	r.Handle("/metrics", promhttp.Handler())
 
-	v.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, map[string]string{"Ping": "Pong"})
 	})
 
-	v.Post("/api/users/{user:[a-z0-9-.]+}", func(w http.ResponseWriter, r *http.Request) {
+	r.Post("/api/users/{user:[a-z0-9-.]+}", func(w http.ResponseWriter, r *http.Request) {
 		userId, _ := uuid.NewUUID()
 		userName := chi.URLParam(r, "user")
 		err := s.Client.createUser(w, spannerClient, userParams{userID: userId.String(), userName: userName})
@@ -65,7 +65,7 @@ func main() {
 		render.JSON(w, r, map[string]string{})
 	})
 
-	v.Put("/api/users/{user:[a-z0-9-.]+}", func(w http.ResponseWriter, r *http.Request) {
+	r.Put("/api/users/{user:[a-z0-9-.]+}", func(w http.ResponseWriter, r *http.Request) {
 		type bodyParams struct {
 			Score int `json:"score"`
 		}
@@ -88,7 +88,7 @@ func main() {
 		render.JSON(w, r, map[string]string{})
 	})
 
-	if err := http.ListenAndServe(":8080", v); err != nil {
+	if err := http.ListenAndServe(":8080", r); err != nil {
 		oplog.Err(err)
 	}
 
