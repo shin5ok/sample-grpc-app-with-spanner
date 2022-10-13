@@ -115,7 +115,7 @@ func (d dbClient) ListUsers(ctx context.Context, w io.Writer, client *spanner.Cl
 	iter := txn.Query(ctx, stmt)
 	defer iter.Stop()
 
-	var results []map[string]interface{}
+	results := []map[string]interface{}{}
 	for {
 		row, err := iter.Next()
 		if err == iterator.Done {

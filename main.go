@@ -50,6 +50,11 @@ func main() {
 
 	r.Handle("/metrics", promhttp.Handler())
 
+	errorRender := func(w http.ResponseWriter, r *http.Request, httpCode int, err error) {
+		render.Status(r, httpCode)
+		render.JSON(w, r, map[string]interface{}{"ERROR": err.Error()})
+	}
+
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, map[string]string{"Ping": "Pong"})
 	})
@@ -59,8 +64,8 @@ func main() {
 		ctx := r.Context()
 		results, err := s.Client.ListUsers(ctx, w, spannerClient, userName)
 		if err != nil {
-			render.Status(r, 500)
-			render.JSON(w, r, map[string]interface{}{"ERROR": err.Error()})
+			errorRender(w, r, 500, err)
+			return
 		}
 		render.JSON(w, r, results)
 	})
@@ -71,8 +76,7 @@ func main() {
 		ctx := r.Context()
 		err := s.Client.createUser(ctx, w, spannerClient, userParams{userID: userId.String(), userName: userName})
 		if err != nil {
-			render.Status(r, 500)
-			render.JSON(w, r, map[string]string{"ERROR": err.Error()})
+			errorRender(w, r, 500, err)
 			return
 		}
 		render.JSON(w, r, map[string]string{})
@@ -85,8 +89,7 @@ func main() {
 		params := bodyParams{}
 		jsonDecorder := json.NewDecoder(r.Body)
 		if err := jsonDecorder.Decode(&params); err != nil {
-			render.Status(r, 500)
-			render.JSON(w, r, map[string]string{"ERROR": err.Error()})
+			errorRender(w, r, 500, err)
 			return
 		}
 
@@ -95,8 +98,7 @@ func main() {
 		ctx := r.Context()
 		err := s.Client.updateScore(ctx, w, spannerClient, userParams{userName: userName}, int64(newScore))
 		if err != nil {
-			render.Status(r, 500)
-			render.JSON(w, r, map[string]string{"ERROR": err.Error()})
+			errorRender(w, r, 500, err)
 			return
 		}
 		render.JSON(w, r, map[string]string{})
