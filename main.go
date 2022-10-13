@@ -53,6 +53,16 @@ func main() {
 		render.JSON(w, r, map[string]string{"Ping": "Pong"})
 	})
 
+	r.Get("/api/users/{user:[a-z0-9-.]+}", func(w http.ResponseWriter, r *http.Request) {
+		userName := chi.URLParam(r, "user")
+		results, err := s.Client.ListUsers(w, spannerClient, userName)
+		if err != nil {
+			render.Status(r, 500)
+			render.JSON(w, r, map[string]interface{}{"ERROR": err.Error()})
+		}
+		render.JSON(w, r, results)
+	})
+
 	r.Post("/api/users/{user:[a-z0-9-.]+}", func(w http.ResponseWriter, r *http.Request) {
 		userId, _ := uuid.NewUUID()
 		userName := chi.URLParam(r, "user")
