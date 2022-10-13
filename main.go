@@ -55,7 +55,7 @@ func main() {
 
 	r.Get("/api/users/{user:[a-z0-9-.]+}", func(w http.ResponseWriter, r *http.Request) {
 		userName := chi.URLParam(r, "user")
-		ctx := context.Background()
+		ctx := r.Context()
 		results, err := s.Client.ListUsers(ctx, w, spannerClient, userName)
 		if err != nil {
 			render.Status(r, 500)
@@ -67,7 +67,7 @@ func main() {
 	r.Post("/api/users/{user:[a-z0-9-.]+}", func(w http.ResponseWriter, r *http.Request) {
 		userId, _ := uuid.NewUUID()
 		userName := chi.URLParam(r, "user")
-		ctx := context.Background()
+		ctx := r.Context()
 		err := s.Client.createUser(ctx, w, spannerClient, userParams{userID: userId.String(), userName: userName})
 		if err != nil {
 			render.Status(r, 500)
@@ -91,7 +91,7 @@ func main() {
 
 		userName := chi.URLParam(r, "user")
 		newScore := params.Score
-		ctx := context.Background()
+		ctx := r.Context()
 		err := s.Client.updateScore(ctx, w, spannerClient, userParams{userName: userName}, int64(newScore))
 		if err != nil {
 			render.Status(r, 500)
