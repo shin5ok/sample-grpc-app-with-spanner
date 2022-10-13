@@ -12,9 +12,9 @@ import (
 )
 
 type GameUserOperation interface {
-	createUser(io.Writer, *spanner.Client, userParams) error
-	updateScore(io.Writer, *spanner.Client, userParams, int64) error
-	ListUsers(io.Writer, *spanner.Client, string) ([]map[string]interface{}, error)
+	createUser(context.Context, io.Writer, *spanner.Client, userParams) error
+	updateScore(context.Context, io.Writer, *spanner.Client, userParams, int64) error
+	ListUsers(context.Context, io.Writer, *spanner.Client, string) ([]map[string]interface{}, error)
 }
 
 type userParams struct {
@@ -35,9 +35,8 @@ func spannerNewClient(dbString string) (*spanner.Client, error) {
 }
 
 // create a user while initializing score field
-func (d dbClient) createUser(w io.Writer, client *spanner.Client, u userParams) error {
+func (d dbClient) createUser(ctx context.Context, w io.Writer, client *spanner.Client, u userParams) error {
 
-	ctx := context.Background()
 	_, err := client.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
 		sqlToUsers := `INSERT users (user_id, name, created_at, updated_at)
 		  VALUES (@userID, @userName, @timestamp, @timestamp)`
@@ -77,8 +76,7 @@ func (d dbClient) createUser(w io.Writer, client *spanner.Client, u userParams) 
 }
 
 // update score field corresponding to specified user
-func (d dbClient) updateScore(w io.Writer, client *spanner.Client, u userParams, score int64) error {
-	ctx := context.Background()
+func (d dbClient) updateScore(ctx context.Context, w io.Writer, client *spanner.Client, u userParams, score int64) error {
 	_, err := client.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
 		sqlToScore := `update scores set score = @newScore, updated_at = @timestamp where user_id = (select user_id from users where name = @name limit 1)`
 		t := time.Now().Format("2006-01-02 15:04:05")
@@ -102,7 +100,7 @@ func (d dbClient) updateScore(w io.Writer, client *spanner.Client, u userParams,
 	return err
 }
 
-func (d dbClient) ListUsers(w io.Writer, client *spanner.Client, name string) ([]map[string]interface{}, error) {
+func (d dbClient) ListUsers(ctx context.Context, w io.Writer, client *spanner.Client, name string) ([]map[string]interface{}, error) {
 	txn := client.ReadOnlyTransaction()
 	defer txn.Close()
 	// SELECT users.user_id,users.name from users join scores on users.user_id = scores.user_id where users.name = 'momo';
@@ -114,7 +112,6 @@ func (d dbClient) ListUsers(w io.Writer, client *spanner.Client, name string) ([
 		},
 	}
 
-	ctx := context.Background()
 	iter := txn.Query(ctx, stmt)
 	defer iter.Stop()
 
