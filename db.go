@@ -26,14 +26,15 @@ type dbClient struct {
 	sc *spanner.Client
 }
 
-func spannerNewClient(dbString string) (*spanner.Client, error) {
+func newClient(ctx context.Context, dbString string) (dbClient, error) {
 
-	ctx := context.Background()
 	client, err := spanner.NewClient(ctx, dbString)
 	if err != nil {
-		return &spanner.Client{}, err
+		return dbClient{}, err
 	}
-	return client, nil
+	return dbClient{
+		sc: client,
+	}, nil
 }
 
 // create a user while initializing score field
@@ -105,7 +106,6 @@ func (d dbClient) updateScore(ctx context.Context, w io.Writer, u userParams, sc
 func (d dbClient) ListUsers(ctx context.Context, w io.Writer, name string) ([]map[string]interface{}, error) {
 	txn := d.sc.ReadOnlyTransaction()
 	defer txn.Close()
-	// SELECT users.user_id,users.name from users join scores on users.user_id = scores.user_id where users.name = 'momo';
 	sql := "SELECT users.user_id,users.name,scores.score from users join scores on users.user_id = scores.user_id where users.name like @name;"
 	stmt := spanner.Statement{
 		SQL: sql,
