@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -26,13 +27,15 @@ type Serving struct {
 
 func main() {
 
-	spannerClient, _ := spannerNewClient(spannerString)
-	defer spannerClient.Close()
+	ctx := context.Background()
+	db, err := newClient(ctx, spannerString)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.sc.Close()
 
 	s := Serving{
-		Client: dbClient{
-			sc: spannerClient,
-		},
+		Client: db,
 	}
 
 	oplog := httplog.LogEntry(context.Background())
