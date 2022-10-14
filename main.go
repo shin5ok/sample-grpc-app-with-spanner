@@ -26,12 +26,14 @@ type Serving struct {
 
 func main() {
 
-	s := Serving{
-		Client: dbClient{},
-	}
-
 	spannerClient, _ := spannerNewClient(spannerString)
 	defer spannerClient.Close()
+
+	s := Serving{
+		Client: dbClient{
+			sc: spannerClient,
+		},
+	}
 
 	oplog := httplog.LogEntry(context.Background())
 	/* jsonify logging */
@@ -62,7 +64,7 @@ func main() {
 	r.Get("/api/users/{user:[a-z0-9-.]+}", func(w http.ResponseWriter, r *http.Request) {
 		userName := chi.URLParam(r, "user")
 		ctx := r.Context()
-		results, err := s.Client.ListUsers(ctx, w, spannerClient, userName)
+		results, err := s.Client.ListUsers(ctx, w, userName)
 		if err != nil {
 			errorRender(w, r, 500, err)
 			return
@@ -74,7 +76,7 @@ func main() {
 		userId, _ := uuid.NewUUID()
 		userName := chi.URLParam(r, "user")
 		ctx := r.Context()
-		err := s.Client.createUser(ctx, w, spannerClient, userParams{userID: userId.String(), userName: userName})
+		err := s.Client.createUser(ctx, w, userParams{userID: userId.String(), userName: userName})
 		if err != nil {
 			errorRender(w, r, 500, err)
 			return
@@ -96,7 +98,7 @@ func main() {
 		userName := chi.URLParam(r, "user")
 		newScore := params.Score
 		ctx := r.Context()
-		err := s.Client.updateScore(ctx, w, spannerClient, userParams{userName: userName}, int64(newScore))
+		err := s.Client.updateScore(ctx, w, userParams{userName: userName}, int64(newScore))
 		if err != nil {
 			errorRender(w, r, 500, err)
 			return
