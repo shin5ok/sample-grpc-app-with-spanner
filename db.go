@@ -12,9 +12,9 @@ import (
 )
 
 type GameUserOperation interface {
-	createUser(context.Context, io.Writer, *spanner.Client, userParams) error
-	updateScore(context.Context, io.Writer, *spanner.Client, userParams, int64) error
-	ListUsers(context.Context, io.Writer, *spanner.Client, string) ([]map[string]interface{}, error)
+	createUser(context.Context, io.Writer, userParams) error
+	updateScore(context.Context, io.Writer, userParams, int64) error
+	ListUsers(context.Context, io.Writer, string) ([]map[string]interface{}, error)
 }
 
 type userParams struct {
@@ -22,7 +22,9 @@ type userParams struct {
 	userName string
 }
 
-type dbClient struct{}
+type dbClient struct {
+	sc *spanner.Client
+}
 
 func spannerNewClient(dbString string) (*spanner.Client, error) {
 
@@ -35,9 +37,9 @@ func spannerNewClient(dbString string) (*spanner.Client, error) {
 }
 
 // create a user while initializing score field
-func (d dbClient) createUser(ctx context.Context, w io.Writer, client *spanner.Client, u userParams) error {
+func (d dbClient) createUser(ctx context.Context, w io.Writer, u userParams) error {
 
-	_, err := client.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
+	_, err := d.sc.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
 		sqlToUsers := `INSERT users (user_id, name, created_at, updated_at)
 		  VALUES (@userID, @userName, @timestamp, @timestamp)`
 		t := time.Now().Format("2006-01-02 15:04:05")
@@ -76,8 +78,8 @@ func (d dbClient) createUser(ctx context.Context, w io.Writer, client *spanner.C
 }
 
 // update score field corresponding to specified user
-func (d dbClient) updateScore(ctx context.Context, w io.Writer, client *spanner.Client, u userParams, score int64) error {
-	_, err := client.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
+func (d dbClient) updateScore(ctx context.Context, w io.Writer, u userParams, score int64) error {
+	_, err := d.sc.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
 		sqlToScore := `update scores set score = @newScore, updated_at = @timestamp where user_id = (select user_id from users where name = @name limit 1)`
 		t := time.Now().Format("2006-01-02 15:04:05")
 		params := map[string]interface{}{
@@ -100,8 +102,8 @@ func (d dbClient) updateScore(ctx context.Context, w io.Writer, client *spanner.
 	return err
 }
 
-func (d dbClient) ListUsers(ctx context.Context, w io.Writer, client *spanner.Client, name string) ([]map[string]interface{}, error) {
-	txn := client.ReadOnlyTransaction()
+func (d dbClient) ListUsers(ctx context.Context, w io.Writer, name string) ([]map[string]interface{}, error) {
+	txn := d.sc.ReadOnlyTransaction()
 	defer txn.Close()
 	// SELECT users.user_id,users.name from users join scores on users.user_id = scores.user_id where users.name = 'momo';
 	sql := "SELECT users.user_id,users.name,scores.score from users join scores on users.user_id = scores.user_id where users.name like @name;"
