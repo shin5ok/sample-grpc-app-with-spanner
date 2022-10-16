@@ -53,7 +53,7 @@ func run(s Serving) {
 	m := chiprometheus.NewMiddleware(appName)
 
 	r := chi.NewRouter()
-	r.Use(middleware.Throttle(8))
+	// r.Use(middleware.Throttle(8))
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
@@ -76,7 +76,7 @@ func run(s Serving) {
 		ctx := r.Context()
 		results, err := s.Client.ListUsers(ctx, w, userName)
 		if err != nil {
-			errorRender(w, r, 500, err)
+			errorRender(w, r, http.StatusInternalServerError, err)
 			return
 		}
 		render.JSON(w, r, results)
@@ -88,7 +88,7 @@ func run(s Serving) {
 		ctx := r.Context()
 		err := s.Client.createUser(ctx, w, userParams{userID: userId.String(), userName: userName})
 		if err != nil {
-			errorRender(w, r, 500, err)
+			errorRender(w, r, http.StatusInternalServerError, err)
 			return
 		}
 		render.JSON(w, r, map[string]string{})
@@ -101,7 +101,7 @@ func run(s Serving) {
 		params := bodyParams{}
 		jsonDecorder := json.NewDecoder(r.Body)
 		if err := jsonDecorder.Decode(&params); err != nil {
-			errorRender(w, r, 500, err)
+			errorRender(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -110,7 +110,7 @@ func run(s Serving) {
 		ctx := r.Context()
 		err := s.Client.updateScore(ctx, w, userParams{userName: userName}, int64(newScore))
 		if err != nil {
-			errorRender(w, r, 500, err)
+			errorRender(w, r, http.StatusInternalServerError, err)
 			return
 		}
 		render.JSON(w, r, map[string]string{})
