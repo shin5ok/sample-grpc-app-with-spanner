@@ -81,10 +81,10 @@ func (d dbClient) createUser(ctx context.Context, w io.Writer, u userParams) err
 // update score field corresponding to specified user
 func (d dbClient) updateScore(ctx context.Context, w io.Writer, u userParams, score int64) error {
 	_, err := d.sc.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
-		sqlToScore := `update scores set score = @newScore, updated_at = @timestamp where user_id = (select user_id from users where name = @name limit 1)`
+		sqlToScore := `update scores set score = @newScore, updated_at = @timestamp where user_id = (select user_id from users where user_id = @user_id limit 1)`
 		t := time.Now().Format("2006-01-02 15:04:05")
 		params := map[string]interface{}{
-			"name":      u.userName,
+			"user_id":   u.userID,
 			"timestamp": t,
 			"newScore":  score,
 		}
