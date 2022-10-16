@@ -94,7 +94,7 @@ func run(s Serving) {
 		render.JSON(w, r, map[string]string{})
 	})
 
-	r.Put("/api/users/{user:[a-z0-9-.]+}", func(w http.ResponseWriter, r *http.Request) {
+	r.Put("/api/users/{user_id:[a-z0-9-.]+}", func(w http.ResponseWriter, r *http.Request) {
 		type bodyParams struct {
 			Score int `json:"score"`
 		}
@@ -105,10 +105,10 @@ func run(s Serving) {
 			return
 		}
 
-		userName := chi.URLParam(r, "user")
+		userID := chi.URLParam(r, "user_id")
 		newScore := params.Score
 		ctx := r.Context()
-		err := s.Client.updateScore(ctx, w, userParams{userName: userName}, int64(newScore))
+		err := s.Client.updateScore(ctx, w, userParams{userID: userID}, int64(newScore))
 		if err != nil {
 			errorRender(w, r, http.StatusInternalServerError, err)
 			return
