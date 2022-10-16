@@ -20,6 +20,7 @@ import (
 var appName = "myapp"
 
 var spannerString = os.Getenv("SPANNER_STRING")
+var servicePort = os.Getenv("PORT")
 
 type Serving struct {
 	Client GameUserOperation
@@ -115,7 +116,7 @@ func run(s Serving) {
 		render.JSON(w, r, map[string]string{})
 	})
 
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	if err := http.ListenAndServe(":"+servicePort, r); err != nil {
 		oplog.Err(err)
 	}
 
