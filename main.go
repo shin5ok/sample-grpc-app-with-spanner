@@ -38,6 +38,12 @@ func main() {
 		Client: db,
 	}
 
+	run(s)
+
+}
+
+func run(s Serving) {
+
 	oplog := httplog.LogEntry(context.Background())
 	/* jsonify logging */
 	httpLogger := httplog.NewLogger(appName, httplog.Options{JSON: true, LevelFieldName: "severity", Concise: true})
