@@ -29,14 +29,15 @@ type Serving struct {
 func main() {
 
 	ctx := context.Background()
-	db, err := newClient(ctx, spannerString)
+
+	client, err := newClient(ctx, spannerString)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.sc.Close()
+	defer client.sc.Close()
 
 	s := Serving{
-		Client: db,
+		Client: client,
 	}
 
 	run(s)
