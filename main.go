@@ -40,12 +40,6 @@ func main() {
 		Client: client,
 	}
 
-	run(s)
-
-}
-
-func run(s Serving) {
-
 	oplog := httplog.LogEntry(context.Background())
 	/* jsonify logging */
 	httpLogger := httplog.NewLogger(appName, httplog.Options{JSON: true, LevelFieldName: "severity", Concise: true})
@@ -63,62 +57,68 @@ func run(s Serving) {
 
 	r.Handle("/metrics", promhttp.Handler())
 
-	errorRender := func(w http.ResponseWriter, r *http.Request, httpCode int, err error) {
-		render.Status(r, httpCode)
-		render.JSON(w, r, map[string]interface{}{"ERROR": err.Error()})
-	}
-
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, map[string]string{"Ping": "Pong"})
 	})
 
-	r.Get("/api/users/{user:[a-z0-9-.]+}", func(w http.ResponseWriter, r *http.Request) {
-		userName := chi.URLParam(r, "user")
-		ctx := r.Context()
-		results, err := s.Client.ListUsers(ctx, w, userName)
-		if err != nil {
-			errorRender(w, r, http.StatusInternalServerError, err)
-			return
-		}
-		render.JSON(w, r, results)
-	})
+	r.Get("/api/users/{user:[a-z0-9-.]+}", s.getUsers)
 
-	r.Post("/api/users/{user:[a-z0-9-.]+}", func(w http.ResponseWriter, r *http.Request) {
-		userId, _ := uuid.NewUUID()
-		userName := chi.URLParam(r, "user")
-		ctx := r.Context()
-		err := s.Client.createUser(ctx, w, userParams{userID: userId.String(), userName: userName})
-		if err != nil {
-			errorRender(w, r, http.StatusInternalServerError, err)
-			return
-		}
-		render.JSON(w, r, map[string]string{})
-	})
+	r.Post("/api/users/{user:[a-z0-9-.]+}", s.createUser)
 
-	r.Put("/api/users/{user_id:[a-z0-9-.]+}", func(w http.ResponseWriter, r *http.Request) {
-		type bodyParams struct {
-			Score int `json:"score"`
-		}
-		params := bodyParams{}
-		jsonDecorder := json.NewDecoder(r.Body)
-		if err := jsonDecorder.Decode(&params); err != nil {
-			errorRender(w, r, http.StatusInternalServerError, err)
-			return
-		}
-
-		userID := chi.URLParam(r, "user_id")
-		newScore := params.Score
-		ctx := r.Context()
-		err := s.Client.updateScore(ctx, w, userParams{userID: userID}, int64(newScore))
-		if err != nil {
-			errorRender(w, r, http.StatusInternalServerError, err)
-			return
-		}
-		render.JSON(w, r, map[string]string{})
-	})
+	r.Put("/api/users/{user_id:[a-z0-9-.]+}", s.updateUser)
 
 	if err := http.ListenAndServe(":"+servicePort, r); err != nil {
 		oplog.Err(err)
 	}
 
+}
+
+var errorRender = func(w http.ResponseWriter, r *http.Request, httpCode int, err error) {
+	render.Status(r, httpCode)
+	render.JSON(w, r, map[string]interface{}{"ERROR": err.Error()})
+}
+
+func (s Serving) getUsers(w http.ResponseWriter, r *http.Request) {
+	userName := chi.URLParam(r, "user")
+	ctx := r.Context()
+	results, err := s.Client.ListUsers(ctx, w, userName)
+	if err != nil {
+		errorRender(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	render.JSON(w, r, results)
+}
+
+func (s Serving) createUser(w http.ResponseWriter, r *http.Request) {
+	userId, _ := uuid.NewUUID()
+	userName := chi.URLParam(r, "user")
+	ctx := r.Context()
+	err := s.Client.createUser(ctx, w, userParams{userID: userId.String(), userName: userName})
+	if err != nil {
+		errorRender(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	render.JSON(w, r, map[string]string{})
+}
+
+func (s Serving) updateUser(w http.ResponseWriter, r *http.Request) {
+	type bodyParams struct {
+		Score int `json:"score"`
+	}
+	params := bodyParams{}
+	jsonDecorder := json.NewDecoder(r.Body)
+	if err := jsonDecorder.Decode(&params); err != nil {
+		errorRender(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	userID := chi.URLParam(r, "user_id")
+	newScore := params.Score
+	ctx := r.Context()
+	err := s.Client.updateScore(ctx, w, userParams{userID: userID}, int64(newScore))
+	if err != nil {
+		errorRender(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	render.JSON(w, r, map[string]string{})
 }
