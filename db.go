@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"time"
 
@@ -13,7 +12,7 @@ import (
 type GameUserOperation interface {
 	createUser(context.Context, io.Writer, userParams) error
 	addItemToUser(context.Context, io.Writer, userParams, itemParams) error
-	listUsers(context.Context, io.Writer, string) ([]map[string]interface{}, error)
+	userInfo(context.Context, io.Writer, string) ([]map[string]interface{}, error)
 }
 
 type userParams struct {
@@ -94,14 +93,15 @@ func (d dbClient) addItemToUser(ctx context.Context, w io.Writer, u userParams, 
 }
 
 // update score field corresponding to specified user
-func (d dbClient) listUsers(ctx context.Context, w io.Writer, name string) ([]map[string]interface{}, error) {
+func (d dbClient) userInfo(ctx context.Context, w io.Writer, userID string) ([]map[string]interface{}, error) {
 	txn := d.sc.ReadOnlyTransaction()
 	defer txn.Close()
-	sql := "SELECT users.user_id,users.name from users join user_items on users.user_id = user_items.user_id where users.name like @name;"
+	// sql := "SELECT items.item_name,user_items. from user_items join items on user_items.user_id = items.user_id where user_items.user_id like @user_id;"
+	sql := "select items.item_name,user_items.item_id from user_items join items on items.item_id = user_items.item_id where user_items.user_id = @user_id;"
 	stmt := spanner.Statement{
 		SQL: sql,
 		Params: map[string]interface{}{
-			"name": fmt.Sprintf("%s%%", name),
+			"user_id": userID,
 		},
 	}
 
@@ -117,15 +117,13 @@ func (d dbClient) listUsers(ctx context.Context, w io.Writer, name string) ([]ma
 		if err != nil {
 			return results, err
 		}
-		var userName string
-		var userId string
-		//var userScore int64
-		//if err := row.Columns(&userName, &userId, &userScore); err != nil {
-		if err := row.Columns(&userName, &userId); err != nil {
+		var itemNames string
+		var itemIds string
+		if err := row.Columns(&itemNames, &itemIds); err != nil {
 			return results, err
 		}
 
-		results = append(results, map[string]interface{}{"name": userName, "id": userId})
+		results = append(results, map[string]interface{}{"name": itemNames, "id": itemIds})
 
 	}
 
