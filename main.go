@@ -58,7 +58,7 @@ func main() {
 
 	r.Get("/", s.pingPong)
 
-	r.Get("/api/users/{user:[a-z0-9-.]+}", s.getUsers)
+	r.Get("/api/users/{user_id:[a-z0-9-.]+}", s.getUserItems)
 
 	r.Post("/api/users/{user:[a-z0-9-.]+}", s.createUser)
 
@@ -75,10 +75,10 @@ var errorRender = func(w http.ResponseWriter, r *http.Request, httpCode int, err
 	render.JSON(w, r, map[string]interface{}{"ERROR": err.Error()})
 }
 
-func (s Serving) getUsers(w http.ResponseWriter, r *http.Request) {
-	userName := chi.URLParam(r, "user")
+func (s Serving) getUserItems(w http.ResponseWriter, r *http.Request) {
+	userID := chi.URLParam(r, "user_id")
 	ctx := r.Context()
-	results, err := s.Client.listUsers(ctx, w, userName)
+	results, err := s.Client.userInfo(ctx, w, userID)
 	if err != nil {
 		errorRender(w, r, http.StatusInternalServerError, err)
 		return
