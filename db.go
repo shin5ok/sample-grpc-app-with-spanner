@@ -13,6 +13,7 @@ import (
 
 type GameUserOperation interface {
 	createUser(context.Context, io.Writer, userParams) error
+	addItemToUser(context.Context, io.Writer, userParams, itemParams) error
 	updateScore(context.Context, io.Writer, userParams, int64) error
 	ListUsers(context.Context, io.Writer, string) ([]map[string]interface{}, error)
 }
@@ -20,6 +21,11 @@ type GameUserOperation interface {
 type userParams struct {
 	userID   string
 	userName string
+}
+
+type itemParams struct {
+	itemID    string
+	itemPrice int64
 }
 
 type dbClient struct {
@@ -73,6 +79,31 @@ func (d dbClient) createUser(ctx context.Context, w io.Writer, u userParams) err
 			return err
 		}
 
+		return nil
+	})
+	return err
+}
+
+func (d dbClient) addItemToUser(ctx context.Context, w io.Writer, u userParams, i itemParams) error {
+
+	_, err := d.sc.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
+		sqlToUsers := `INSERT user_items (user_id, item_id, created_at, updated_at)
+		  VALUES (@userID, @itemID, @timestamp, @timestamp)`
+		t := time.Now().Format("2006-01-02 15:04:05")
+		params := map[string]interface{}{
+			"userID":    u.userID,
+			"itemId":    i.itemID,
+			"timestamp": t,
+		}
+		stmtToUsers := spanner.Statement{
+			SQL:    sqlToUsers,
+			Params: params,
+		}
+		rowCountToUsers, err := txn.Update(ctx, stmtToUsers)
+		_ = rowCountToUsers
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 	return err
