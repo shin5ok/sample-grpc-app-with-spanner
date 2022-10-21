@@ -7,14 +7,12 @@ import (
 	"time"
 
 	"cloud.google.com/go/spanner"
-	"github.com/google/uuid"
 	"google.golang.org/api/iterator"
 )
 
 type GameUserOperation interface {
 	createUser(context.Context, io.Writer, userParams) error
 	addItemToUser(context.Context, io.Writer, userParams, itemParams) error
-	updateScore(context.Context, io.Writer, userParams, int64) error
 	listUsers(context.Context, io.Writer, string) ([]map[string]interface{}, error)
 }
 
@@ -65,20 +63,6 @@ func (d dbClient) createUser(ctx context.Context, w io.Writer, u userParams) err
 			return err
 		}
 
-		sqlToScores := `INSERT scores (user_id, score_id, score, created_at, updated_at)
-		  VALUES (@userID, @scoreID, 0, @timestamp, @timestamp)`
-		stmtToScores := spanner.Statement{SQL: sqlToScores, Params: map[string]interface{}{}}
-		scoreID, _ := uuid.NewUUID()
-		stmtToScores.Params["scoreID"] = scoreID.String()
-		stmtToScores.Params["userID"] = u.userID
-		stmtToScores.Params["timestamp"] = t
-
-		rowCountToScores, err := txn.Update(ctx, stmtToScores)
-		_ = rowCountToScores
-		if err != nil {
-			return err
-		}
-
 		return nil
 	})
 	return err
@@ -110,34 +94,10 @@ func (d dbClient) addItemToUser(ctx context.Context, w io.Writer, u userParams, 
 }
 
 // update score field corresponding to specified user
-func (d dbClient) updateScore(ctx context.Context, w io.Writer, u userParams, score int64) error {
-	_, err := d.sc.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
-		sqlToScore := `update scores set score = @newScore, updated_at = @timestamp where user_id = (select user_id from users where user_id = @user_id limit 1)`
-		t := time.Now().Format("2006-01-02 15:04:05")
-		params := map[string]interface{}{
-			"user_id":   u.userID,
-			"timestamp": t,
-			"newScore":  score,
-		}
-		stmtToScore := spanner.Statement{
-			SQL:    sqlToScore,
-			Params: params,
-		}
-
-		_, err := txn.Update(ctx, stmtToScore)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	return err
-}
-
 func (d dbClient) listUsers(ctx context.Context, w io.Writer, name string) ([]map[string]interface{}, error) {
 	txn := d.sc.ReadOnlyTransaction()
 	defer txn.Close()
-	sql := "SELECT users.user_id,users.name,scores.score from users join scores on users.user_id = scores.user_id where users.name like @name;"
+	sql := "SELECT users.user_id,users.name from users join user_items on users.user_id = user_items.user_id where users.name like @name;"
 	stmt := spanner.Statement{
 		SQL: sql,
 		Params: map[string]interface{}{
@@ -159,12 +119,13 @@ func (d dbClient) listUsers(ctx context.Context, w io.Writer, name string) ([]ma
 		}
 		var userName string
 		var userId string
-		var userScore int64
-		if err := row.Columns(&userName, &userId, &userScore); err != nil {
+		//var userScore int64
+		//if err := row.Columns(&userName, &userId, &userScore); err != nil {
+		if err := row.Columns(&userName, &userId); err != nil {
 			return results, err
 		}
 
-		results = append(results, map[string]interface{}{"name": userName, "id": userId, "score": userScore})
+		results = append(results, map[string]interface{}{"name": userName, "id": userId})
 
 	}
 
