@@ -79,7 +79,7 @@ var errorRender = func(w http.ResponseWriter, r *http.Request, httpCode int, err
 func (s Serving) getUsers(w http.ResponseWriter, r *http.Request) {
 	userName := chi.URLParam(r, "user")
 	ctx := r.Context()
-	results, err := s.Client.ListUsers(ctx, w, userName)
+	results, err := s.Client.listUsers(ctx, w, userName)
 	if err != nil {
 		errorRender(w, r, http.StatusInternalServerError, err)
 		return
