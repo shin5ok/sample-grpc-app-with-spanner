@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -63,7 +62,7 @@ func main() {
 
 	r.Post("/api/users/{user:[a-z0-9-.]+}", s.createUser)
 
-	r.Put("/api/users/{user_id:[a-z0-9-.]+}", s.updateUser)
+	r.Put("/api/users/{user_id:[a-z0-9-.]+}/{item_id:[a-z0-9-.]+}", s.addItemToUser)
 
 	if err := http.ListenAndServe(":"+servicePort, r); err != nil {
 		oplog.Err(err)
@@ -99,21 +98,11 @@ func (s Serving) createUser(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, map[string]string{})
 }
 
-func (s Serving) updateUser(w http.ResponseWriter, r *http.Request) {
-	type bodyParams struct {
-		Score int `json:"score"`
-	}
-	params := bodyParams{}
-	jsonDecorder := json.NewDecoder(r.Body)
-	if err := jsonDecorder.Decode(&params); err != nil {
-		errorRender(w, r, http.StatusInternalServerError, err)
-		return
-	}
-
+func (s Serving) addItemToUser(w http.ResponseWriter, r *http.Request) {
 	userID := chi.URLParam(r, "user_id")
-	newScore := params.Score
+	itemID := chi.URLParam(r, "item_id")
 	ctx := r.Context()
-	err := s.Client.updateScore(ctx, w, userParams{userID: userID}, int64(newScore))
+	err := s.Client.addItemToUser(ctx, w, userParams{userID: userID}, itemParams{itemID: itemID})
 	if err != nil {
 		errorRender(w, r, http.StatusInternalServerError, err)
 		return
