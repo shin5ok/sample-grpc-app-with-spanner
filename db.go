@@ -15,7 +15,7 @@ type GameUserOperation interface {
 	createUser(context.Context, io.Writer, userParams) error
 	addItemToUser(context.Context, io.Writer, userParams, itemParams) error
 	updateScore(context.Context, io.Writer, userParams, int64) error
-	ListUsers(context.Context, io.Writer, string) ([]map[string]interface{}, error)
+	listUsers(context.Context, io.Writer, string) ([]map[string]interface{}, error)
 }
 
 type userParams struct {
@@ -134,7 +134,7 @@ func (d dbClient) updateScore(ctx context.Context, w io.Writer, u userParams, sc
 	return err
 }
 
-func (d dbClient) ListUsers(ctx context.Context, w io.Writer, name string) ([]map[string]interface{}, error) {
+func (d dbClient) listUsers(ctx context.Context, w io.Writer, name string) ([]map[string]interface{}, error) {
 	txn := d.sc.ReadOnlyTransaction()
 	defer txn.Close()
 	sql := "SELECT users.user_id,users.name,scores.score from users join scores on users.user_id = scores.user_id where users.name like @name;"
