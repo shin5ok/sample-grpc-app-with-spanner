@@ -12,7 +12,7 @@ import (
 type GameUserOperation interface {
 	createUser(context.Context, io.Writer, userParams) error
 	addItemToUser(context.Context, io.Writer, userParams, itemParams) error
-	userInfo(context.Context, io.Writer, string) ([]map[string]interface{}, error)
+	userItems(context.Context, io.Writer, string) ([]map[string]interface{}, error)
 }
 
 type userParams struct {
@@ -40,7 +40,7 @@ func newClient(ctx context.Context, dbString string) (dbClient, error) {
 	}, nil
 }
 
-// create a user while initializing score field
+// create a user
 func (d dbClient) createUser(ctx context.Context, w io.Writer, u userParams) error {
 
 	_, err := d.sc.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
@@ -67,6 +67,7 @@ func (d dbClient) createUser(ctx context.Context, w io.Writer, u userParams) err
 	return err
 }
 
+// add item specified item_id to specific user
 func (d dbClient) addItemToUser(ctx context.Context, w io.Writer, u userParams, i itemParams) error {
 
 	_, err := d.sc.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
@@ -92,8 +93,8 @@ func (d dbClient) addItemToUser(ctx context.Context, w io.Writer, u userParams, 
 	return err
 }
 
-// update score field corresponding to specified user
-func (d dbClient) userInfo(ctx context.Context, w io.Writer, userID string) ([]map[string]interface{}, error) {
+// get what items the user has
+func (d dbClient) userItems(ctx context.Context, w io.Writer, userID string) ([]map[string]interface{}, error) {
 
 	txn := d.sc.ReadOnlyTransaction()
 	defer txn.Close()

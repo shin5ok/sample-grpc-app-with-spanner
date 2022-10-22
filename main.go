@@ -78,7 +78,7 @@ var errorRender = func(w http.ResponseWriter, r *http.Request, httpCode int, err
 func (s Serving) getUserItems(w http.ResponseWriter, r *http.Request) {
 	userID := chi.URLParam(r, "user_id")
 	ctx := r.Context()
-	results, err := s.Client.userInfo(ctx, w, userID)
+	results, err := s.Client.userItems(ctx, w, userID)
 	if err != nil {
 		errorRender(w, r, http.StatusInternalServerError, err)
 		return
