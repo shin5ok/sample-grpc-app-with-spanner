@@ -60,7 +60,7 @@ func main() {
 
 	r.Get("/api/users/{user_id:[a-z0-9-.]+}", s.getUserItems)
 
-	r.Post("/api/users/{user:[a-z0-9-.]+}", s.createUser)
+	r.Post("/api/users/{user_name:[a-z0-9-.]+}", s.createUser)
 
 	r.Put("/api/users/{user_id:[a-z0-9-.]+}/{item_id:[a-z0-9-.]+}", s.addItemToUser)
 
@@ -88,7 +88,7 @@ func (s Serving) getUserItems(w http.ResponseWriter, r *http.Request) {
 
 func (s Serving) createUser(w http.ResponseWriter, r *http.Request) {
 	userId, _ := uuid.NewUUID()
-	userName := chi.URLParam(r, "user")
+	userName := chi.URLParam(r, "user_name")
 	ctx := r.Context()
 	err := s.Client.createUser(ctx, w, userParams{userID: userId.String(), userName: userName})
 	if err != nil {
