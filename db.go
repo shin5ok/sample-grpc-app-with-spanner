@@ -22,7 +22,7 @@ type userParams struct {
 
 type itemParams struct {
 	itemID    string
-	itemPrice int64
+	itemPrice int
 }
 
 type dbClient struct {
@@ -94,6 +94,7 @@ func (d dbClient) addItemToUser(ctx context.Context, w io.Writer, u userParams, 
 
 // update score field corresponding to specified user
 func (d dbClient) userInfo(ctx context.Context, w io.Writer, userID string) ([]map[string]interface{}, error) {
+
 	txn := d.sc.ReadOnlyTransaction()
 	defer txn.Close()
 	sql := `select users.name,items.item_name,user_items.item_id from user_items join items on items.item_id = user_items.item_id join users on users.user_id = user_items.user_id where user_items.user_id = @user_id`
