@@ -96,8 +96,7 @@ func (d dbClient) addItemToUser(ctx context.Context, w io.Writer, u userParams, 
 func (d dbClient) userInfo(ctx context.Context, w io.Writer, userID string) ([]map[string]interface{}, error) {
 	txn := d.sc.ReadOnlyTransaction()
 	defer txn.Close()
-	// sql := "SELECT items.item_name,user_items. from user_items join items on user_items.user_id = items.user_id where user_items.user_id like @user_id;"
-	sql := "select items.item_name,user_items.item_id from user_items join items on items.item_id = user_items.item_id where user_items.user_id = @user_id;"
+	sql := `select items.item_name,user_items.item_id from user_items join items on items.item_id = user_items.item_id where user_items.user_id = @user_id;`
 	stmt := spanner.Statement{
 		SQL: sql,
 		Params: map[string]interface{}{
