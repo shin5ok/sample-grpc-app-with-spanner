@@ -98,7 +98,9 @@ func (d dbClient) userItems(ctx context.Context, w io.Writer, userID string) ([]
 
 	txn := d.sc.ReadOnlyTransaction()
 	defer txn.Close()
-	sql := `select users.name,items.item_name,user_items.item_id from user_items join items on items.item_id = user_items.item_id join users on users.user_id = user_items.user_id where user_items.user_id = @user_id`
+	sql := `select users.name,items.item_name,user_items.item_id
+		from user_items join items on items.item_id = user_items.item_id join users on users.user_id = user_items.user_id
+		where user_items.user_id = @user_id`
 	stmt := spanner.Statement{
 		SQL: sql,
 		Params: map[string]interface{}{
@@ -125,7 +127,12 @@ func (d dbClient) userItems(ctx context.Context, w io.Writer, userID string) ([]
 			return results, err
 		}
 
-		results = append(results, map[string]interface{}{"user_name": userName, "item_name": itemNames, "item_id": itemIds})
+		results = append(results,
+			map[string]interface{}{
+				"user_name": userName,
+				"item_name": itemNames,
+				"item_id":   itemIds,
+			})
 
 	}
 
