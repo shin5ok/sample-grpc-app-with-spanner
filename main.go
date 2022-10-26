@@ -56,7 +56,7 @@ func main() {
 
 	r.Handle("/metrics", promhttp.Handler())
 
-	r.Get("/", s.pingPong)
+	r.Get("/test", s.pingPong)
 
 	r.Get("/api/users/{user_id:[a-z0-9-.]+}", s.getUserItems)
 
@@ -111,5 +111,6 @@ func (s Serving) addItemToUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s Serving) pingPong(w http.ResponseWriter, r *http.Request) {
+	render.Status(r, http.StatusOK)
 	render.JSON(w, r, map[string]string{"Ping": "Pong"})
 }
