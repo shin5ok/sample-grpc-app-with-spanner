@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -40,8 +41,9 @@ func init() {
 
 	var list []spansql.DDLStmt
 
-	schemas, _ := filepath.Glob("schemas/*.sql")
+	schemas, _ := filepath.Glob("schemas/*_ddl.sql")
 	for _, file := range schemas {
+		fmt.Println(file)
 		buf, _ := os.ReadFile(file)
 		stmt, err := spansql.ParseDDLStmt(string(buf))
 		if err != nil {
@@ -77,7 +79,7 @@ func Test_run(t *testing.T) {
 
 func Test_createUser(t *testing.T) {
 
-	req, err := http.NewRequest("POST", "/api/users/test-user", nil)
+	req, err := http.NewRequest("POST", "/api/users/mytestuser", nil)
 	assert.Nil(t, err)
 
 	rr := httptest.NewRecorder()
@@ -87,7 +89,7 @@ func Test_createUser(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Expected: %d. Got: %d", http.StatusOK, rr.Code)
+		t.Errorf("Expected: %d. Got: %d, Message: %s", http.StatusOK, rr.Code, rr.Body)
 	}
 
 }
