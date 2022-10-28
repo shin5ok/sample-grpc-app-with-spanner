@@ -1,26 +1,3 @@
-CREATE TABLE users (
-  user_id STRING(36) NOT NULL,
-  name STRING(MAX) NOT NULL,
-  created_at TIMESTAMP NOT NULL,
-  updated_at TIMESTAMP NOT NULL,
-) PRIMARY KEY(user_id);
-
-CREATE TABLE user_items (
-  user_id STRING(36) NOT NULL,
-  item_id STRING(36) NOT NULL,
-  created_at TIMESTAMP NOT NULL,
-  updated_at TIMESTAMP NOT NULL,
-) PRIMARY KEY(user_id, item_id),
-  INTERLEAVE IN PARENT users ON DELETE CASCADE;
-
-CREATE TABLE items (
-  item_id STRING(36) NOT NULL,
-  item_name STRING(64) NOT NULL,
-  price INT64 NOT NULL,
-  created_at TIMESTAMP NOT NULL,
-  updated_at TIMESTAMP NOT NULL,
-) PRIMARY KEY(item_id);
-
 INSERT INTO items (item_id, item_name, price, created_at, updated_at)
   VALUES
   ('46f026ae-c6e9-4e41-82e5-240c7645a553', 'item1', 100, '2022-10-10 00:00:00', '2020-10-10 10:10:10'),
