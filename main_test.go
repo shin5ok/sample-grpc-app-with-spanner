@@ -76,20 +76,3 @@ func Test_run(t *testing.T) {
 	}
 
 }
-
-func Test_createUser(t *testing.T) {
-
-	req, err := http.NewRequest("POST", "/api/users/mytestuser", nil)
-	assert.Nil(t, err)
-
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(fakeServing.createUser)
-	assert.NotNil(t, handler)
-
-	handler.ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Expected: %d. Got: %d, Message: %s", http.StatusOK, rr.Code, rr.Body)
-	}
-
-}
