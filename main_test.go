@@ -53,11 +53,10 @@ func init() {
 	sqlDDL := spansql.DDL{
 		List: list,
 	}
-	_ = sqlDDL
-	// err = srv.UpdateDDL(&sqlDDL)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	err = srv.UpdateDDL(&sqlDDL)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 }
 
