@@ -2,17 +2,13 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"cloud.google.com/go/spanner"
-	"cloud.google.com/go/spanner/spannertest"
-	"cloud.google.com/go/spanner/spansql"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,44 +18,21 @@ var (
 	fakeServing  = Serving{}
 )
 
+/*
+Note:
+Before running test, run spanner emulator
+*/
 func init() {
-	srv, err := spannertest.NewServer("localhost:0")
-	if err != nil {
-		log.Fatal(err)
-	}
-	os.Setenv("SPANNER_EMULATOR_HOST", srv.Addr)
-	// os.Setenv("PORT", "12820")
+	os.Setenv("SPANNER_EMULATOR_HOST", `localhost:9010`)
 	ctx := context.Background()
 
-	client, err = spanner.NewClient(ctx, fakeDbString)
+	client, err := spanner.NewClient(ctx, fakeDbString)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fakeServing = Serving{
 		Client: dbClient{sc: client},
 	}
-
-	var list []spansql.DDLStmt
-
-	schemas, _ := filepath.Glob("schemas/*_ddl.sql")
-	for _, file := range schemas {
-		fmt.Println(file)
-		buf, _ := os.ReadFile(file)
-		stmt, err := spansql.ParseDDLStmt(string(buf))
-		if err != nil {
-			log.Print("parse error", err)
-		}
-		list = append(list, stmt)
-	}
-
-	sqlDDL := spansql.DDL{
-		List: list,
-	}
-	err = srv.UpdateDDL(&sqlDDL)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 }
 
 func Test_run(t *testing.T) {
@@ -69,6 +42,21 @@ func Test_run(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(fakeServing.pingPong)
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Expected: %d. Got: %d", http.StatusOK, rr.Code)
+	}
+
+}
+
+func Test_createUser(t *testing.T) {
+
+	req, err := http.NewRequest("POST", "/api/users/test-user", nil)
+	assert.Nil(t, err)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(fakeServing.createUser)
 	handler.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusOK {
