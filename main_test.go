@@ -44,7 +44,7 @@ func Test_run(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Expected: %d. Got: %d", http.StatusOK, rr.Code)
+		t.Errorf("Expected: %d. Got: %d, Message: %s", http.StatusOK, rr.Code, rr.Body)
 	}
 
 }
@@ -59,7 +59,7 @@ func Test_createUser(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Expected: %d. Got: %d", http.StatusOK, rr.Code)
+		t.Errorf("Expected: %d. Got: %d, Message: %s", http.StatusOK, rr.Code, rr.Body)
 	}
 
 }
