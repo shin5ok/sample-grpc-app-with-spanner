@@ -58,6 +58,11 @@ func Test_run(t *testing.T) {
 
 func Test_createUser(t *testing.T) {
 
+	t.Cleanup(
+		/* TODO */
+		func() {},
+	)
+
 	path := "test-user"
 	ctx := chi.NewRouteContext()
 	ctx.URLParams.Add("user_name", path)
