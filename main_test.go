@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"cloud.google.com/go/spanner"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -57,12 +58,18 @@ func Test_run(t *testing.T) {
 
 func Test_createUser(t *testing.T) {
 
-	req, err := http.NewRequest("POST", "/api/users/test-user", nil)
+	path := "test-user"
+	ctx := chi.NewRouteContext()
+	ctx.URLParams.Add("user_name", path)
+
+	r := &http.Request{}
+	req, err := http.NewRequestWithContext(r.Context(), "POST", "/api/users/"+path, nil)
 	assert.Nil(t, err)
+	newReq := req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(fakeServing.createUser)
-	handler.ServeHTTP(rr, req)
+	handler.ServeHTTP(rr, newReq)
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Expected: %d. Got: %d, Message: %s", http.StatusOK, rr.Code, rr.Body)
