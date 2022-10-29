@@ -32,6 +32,12 @@ func init() {
 	fakeServing = Serving{
 		Client: dbClient{sc: client},
 	}
+
+	InitData()
+}
+
+func InitData() {
+	/* TODO */
 }
 
 func Test_run(t *testing.T) {
