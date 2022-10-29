@@ -13,9 +13,8 @@ import (
 )
 
 var (
-	client       *spanner.Client
 	fakeDbString = "projects/your-project-id/instances/foo-instance/databases/bar"
-	fakeServing  = Serving{}
+	fakeServing  Serving
 )
 
 /*
