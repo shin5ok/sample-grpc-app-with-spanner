@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +18,9 @@ import (
 var (
 	fakeDbString = "projects/your-project-id/instances/foo-instance/databases/bar"
 	fakeServing  Serving
+
+	itemTestID = `d169f397-ba3f-413b-bc3c-a465576ef06e`
+	userTestID string
 )
 
 /*
@@ -74,6 +79,38 @@ func Test_createUser(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(fakeServing.createUser)
+	handler.ServeHTTP(rr, newReq)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Expected: %d. Got: %d, Message: %s", http.StatusOK, rr.Code, rr.Body)
+	}
+	var u User
+	json.Unmarshal(rr.Body.Bytes(), &u)
+	userTestID = u.Id
+
+}
+
+// This test depends on Test_createUser
+func Test_addItemUser(t *testing.T) {
+
+	t.Cleanup(
+		/* TODO */
+		func() {},
+	)
+
+	ctx := chi.NewRouteContext()
+	ctx.URLParams.Add("user_id", userTestID)
+	ctx.URLParams.Add("item_id", itemTestID)
+
+	r := &http.Request{}
+	uriPath := fmt.Sprintf("/api/users/%s/%s", userTestID, itemTestID)
+	req, err := http.NewRequestWithContext(r.Context(), "PUT", uriPath, nil)
+	assert.Nil(t, err)
+	newReq := req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
+	log.Println(uriPath)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(fakeServing.addItemToUser)
 	handler.ServeHTTP(rr, newReq)
 
 	if status := rr.Code; status != http.StatusOK {
