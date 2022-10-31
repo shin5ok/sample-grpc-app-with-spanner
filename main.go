@@ -25,6 +25,11 @@ type Serving struct {
 	Client GameUserOperation
 }
 
+type User struct {
+	Name string `json:"name"`
+	Id   string `json:"id"`
+}
+
 func main() {
 
 	ctx := context.Background()
@@ -95,7 +100,10 @@ func (s Serving) createUser(w http.ResponseWriter, r *http.Request) {
 		errorRender(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	render.JSON(w, r, map[string]string{})
+	render.JSON(w, r, User{
+		Id:   userId.String(),
+		Name: userName,
+	})
 }
 
 func (s Serving) addItemToUser(w http.ResponseWriter, r *http.Request) {
