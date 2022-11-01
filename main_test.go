@@ -107,7 +107,6 @@ func Test_addItemUser(t *testing.T) {
 	req, err := http.NewRequestWithContext(r.Context(), "PUT", uriPath, nil)
 	assert.Nil(t, err)
 	newReq := req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
-	log.Println(uriPath)
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(fakeServing.addItemToUser)
@@ -134,7 +133,6 @@ func Test_getUserItems(t *testing.T) {
 	req, err := http.NewRequestWithContext(r.Context(), "GET", uriPath, nil)
 	assert.Nil(t, err)
 	newReq := req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
-	log.Println(uriPath)
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(fakeServing.getUserItems)
@@ -143,5 +141,9 @@ func Test_getUserItems(t *testing.T) {
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Expected: %d. Got: %d, Message: %s", http.StatusOK, rr.Code, rr.Body)
 	}
+
+	var responseBody []map[string]string
+	json.Unmarshal(rr.Body.Bytes(), &responseBody)
+	assert.Equal(t, itemTestID, responseBody[0]["item_id"])
 
 }
