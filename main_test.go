@@ -118,3 +118,30 @@ func Test_addItemUser(t *testing.T) {
 	}
 
 }
+
+func Test_getUserItems(t *testing.T) {
+
+	t.Cleanup(
+		/* TODO */
+		func() {},
+	)
+
+	ctx := chi.NewRouteContext()
+	ctx.URLParams.Add("user_id", userTestID)
+
+	r := &http.Request{}
+	uriPath := fmt.Sprintf("/api/users/%s", userTestID)
+	req, err := http.NewRequestWithContext(r.Context(), "GET", uriPath, nil)
+	assert.Nil(t, err)
+	newReq := req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
+	log.Println(uriPath)
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(fakeServing.getUserItems)
+	handler.ServeHTTP(rr, newReq)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Expected: %d. Got: %d, Message: %s", http.StatusOK, rr.Code, rr.Body)
+	}
+
+}
