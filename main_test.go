@@ -19,7 +19,7 @@ var (
 	fakeDbString = "projects/your-project-id/instances/foo-instance/databases/bar"
 	fakeServing  Serving
 
-	itemTestID = `d169f397-ba3f-413b-bc3c-a465576ef06e`
+	itemTestID = "d169f397-ba3f-413b-bc3c-a465576ef06e"
 	userTestID string
 )
 
@@ -28,7 +28,7 @@ Note:
 Before running test, run spanner emulator
 */
 func init() {
-	os.Setenv("SPANNER_EMULATOR_HOST", `localhost:9010`)
+	os.Setenv("SPANNER_EMULATOR_HOST", "localhost:9010")
 	ctx := context.Background()
 
 	client, err := spanner.NewClient(ctx, fakeDbString)
@@ -63,11 +63,6 @@ func Test_run(t *testing.T) {
 
 func Test_createUser(t *testing.T) {
 
-	t.Cleanup(
-		/* TODO */
-		func() {},
-	)
-
 	path := "test-user"
 	ctx := chi.NewRouteContext()
 	ctx.URLParams.Add("user_name", path)
@@ -93,11 +88,6 @@ func Test_createUser(t *testing.T) {
 // This test depends on Test_createUser
 func Test_addItemUser(t *testing.T) {
 
-	t.Cleanup(
-		/* TODO */
-		func() {},
-	)
-
 	ctx := chi.NewRouteContext()
 	ctx.URLParams.Add("user_id", userTestID)
 	ctx.URLParams.Add("item_id", itemTestID)
@@ -120,11 +110,6 @@ func Test_addItemUser(t *testing.T) {
 
 func Test_getUserItems(t *testing.T) {
 
-	t.Cleanup(
-		/* TODO */
-		func() {},
-	)
-
 	ctx := chi.NewRouteContext()
 	ctx.URLParams.Add("user_id", userTestID)
 
@@ -135,15 +120,11 @@ func Test_getUserItems(t *testing.T) {
 	newReq := req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(fakeServing.getUserItems)
+	handler := http.HandlerFunc(fakeServing.addItemToUser)
 	handler.ServeHTTP(rr, newReq)
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Expected: %d. Got: %d, Message: %s", http.StatusOK, rr.Code, rr.Body)
 	}
-
-	var responseBody []map[string]string
-	json.Unmarshal(rr.Body.Bytes(), &responseBody)
-	assert.Equal(t, itemTestID, responseBody[0]["item_id"])
 
 }
