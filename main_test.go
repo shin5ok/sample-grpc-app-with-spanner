@@ -17,7 +17,7 @@ import (
 
 	"cloud.google.com/go/spanner"
 	"github.com/go-chi/chi/v5"
-	"github.com/shin5ok/egg6-architecting/test_util"
+	"github.com/shin5ok/egg6-architecting/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -42,7 +42,7 @@ func init() {
 	}
 
 	schemaFiles, _ := filepath.Glob("schemas/*_ddl.sql")
-	if err := test_util.InitData(ctx, fakeDbString, schemaFiles); err != nil {
+	if err := testutil.InitData(ctx, fakeDbString, schemaFiles); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -133,7 +133,7 @@ func Test_cleaning(t *testing.T) {
 	t.Cleanup(
 		func() {
 			ctx := context.Background()
-			if err := test_util.DropData(ctx, fakeDbString); err != nil {
+			if err := testutil.DropData(ctx, fakeDbString); err != nil {
 				t.Error(err)
 			}
 		},
