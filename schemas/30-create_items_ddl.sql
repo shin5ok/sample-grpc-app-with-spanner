@@ -4,4 +4,4 @@ CREATE TABLE items (
   price INT64 NOT NULL,
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
-) PRIMARY KEY(item_id)
+) PRIMARY KEY(item_id);
