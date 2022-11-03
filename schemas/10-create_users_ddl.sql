@@ -3,4 +3,4 @@ CREATE TABLE users (
   name STRING(MAX) NOT NULL,
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,
-) PRIMARY KEY(user_id);
+) PRIMARY KEY(user_id)
