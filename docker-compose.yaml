@@ -8,8 +8,8 @@ services:
       - 9010:9010
       - 9020:9020
     networks:
-      - user_api_network
+      - game_api_network
 
 networks:
-  user_api_network:
-    name: user_api_network
+  game_api_network:
+    name: game_api_network
