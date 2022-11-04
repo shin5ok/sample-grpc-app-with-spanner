@@ -225,7 +225,9 @@ gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
 ```
 
 7. Congratulation!!  
-Just test it.
+Just test it, like on local.  
+Of course you need to specify the actual url instead of "http://localhost:8080".  
+The url the Cloud Run service was assigned to would be like this "https://game-api-xxxxxxxxx-xx.a.run.app".
 
 
 ## Transfer logging to Google BigQuery
