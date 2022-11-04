@@ -39,7 +39,7 @@ git clone https://github.com/shin5ok/egg6-architecting
 
 If you don't have profile for local, run it.
 ```
-gcloud config configuration create local-dev
+gcloud config configurations create local-dev
 ```
 
 Set some config values for Cloud Spanner emulator.
@@ -140,7 +140,7 @@ go test -v
 
 1. Switch profile to actual project from local development.
 ```
-gcloud config configuration create egg6-3
+gcloud config configurations create egg6-3
 gcloud confg set project $PRODUCTION_PROJECT
 ```
 Run this command in your shell, just in case.
