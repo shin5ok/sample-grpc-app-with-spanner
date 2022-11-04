@@ -2,13 +2,11 @@
 
 ## Contents.
 - Local Development
-- Dockernize Go application
 - Deploy to production
 - Transfer logging to Google BigQuery
 - Appendix: Attach Google Cloud Load Balancer with Google Managed SSL certificate
-- Appendix: Terraform code to build infrastructure
 
-![architecture_diagram](diagram/diagrams_image.png)
+![architecture_diagram](diagram/production-env.png)
 
 ## Let's get started with some preparation.
 1. Sign in to your project.
@@ -33,7 +31,7 @@ git clone https://github.com/shin5ok/egg6-architecting
 
 ## Local development
 
-![local](diagram/rails7-as-local.png)
+![local](diagram/local-env.png)
 
 1. Prepare for local development.
 
@@ -323,34 +321,6 @@ Find the IP address your Load Balancer uses.
 gcloud compute addresses describe game-api-ip --global --format=json | jq .address -r
 ```
 You need to register this IP address corresponding to your FQDN record.  
-It depends on the way to manage your DNS.
+It depends on the way to manage your DNS.  
+You can use any favorite DNS service that you have authority for.
 
-
-## Appendix: Terraform code to build infrastructure
-
-### Notice:
-- This code uses a demo container image GCP provided.
-- The logging filter for Log Sink in this code follows to the log format that the container app put out.
-- Some component names are different from above procedures.
-
-1. Prepare terraform the latest version.
-Follow this step to install/upgrade terraform.  
-https://learn.hashicorp.com/tutorials/terraform/install-cli
-
-2. [Option] Set variables before terraform execution.
-```
-export TF_VAR_project=<your project>
-export TF_VAR_gcs=<your GCS bucket for managing state>
-export TF_VAR_domain=<your domain that will be used to SSL Certification>
-export TF_VAR_secret_data=<expected master.key data>
-export TF_VAR_region=<your region>
-export TF_VAR_zone=<your zone>
-```
-If you forgot to set some variables, terraform will ask you what is the value of missing ones when it was invoked.
-
-3. Run terraform.
-```
-cd terraform/
-terraform plan
-terraform apply
-```
