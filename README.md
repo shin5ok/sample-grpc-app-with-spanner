@@ -35,11 +35,7 @@ git clone https://github.com/shin5ok/egg6-architecting
 
 ![local](diagram/rails7-as-local.png)
 
-1. Install Ruby 3.1.2 or higher.  
-Consider using rbenv.  
-You might need some utilities like Bundler.
-
-2. Prepare for local development.
+1. Prepare for local development.
 
 If you don't have profile for local, run it.
 ```
@@ -53,9 +49,9 @@ gcloud config set project your-project-id
 gcloud config set api_endpoint_overrides/spanner http://localhost:9020/
 ```
 
-3. Run Cloud Spanner emulator and Redis.
+2. Run Cloud Spanner emulator.
 ```
-docker compose up -d spanner redis
+docker compose up -d spanner
 ```
 - See here to understand the limitation of Cloud Spanner emulator.  
 https://cloud.google.com/spanner/docs/emulator?hl=ja#limitations_and_differences
@@ -81,79 +77,70 @@ Make sure that you are where the repository was cloned to.
 cd your-cloned-directory/
 ```
 
-Install libraries.
+Prepare database.
 ```
-bundle install
+gcloud spanner databases create --instance test-instance game
+```
+Additionally create schemas and initial data.
+```
+for schema in ./schemas/*_ddl.sql;
+do
+    spanner-cli -p $GOOGLE_CLOUD_PROJECT -i test-instance -d game < $schema
+done
 ```
 
-Prepare databases.
-```
-./bin/rails db:create 
-./bin/rails db:migrate
-./bin/rails db:seed
-```
 
 7. Make sure if the emulator works on local environment.
 Login to the emulator.
 ```
-spanner-cli -i test-instance -p $GOOGLE_CLOUD_PROJECT -d users
+spanner-cli -i test-instance -p $GOOGLE_CLOUD_PROJECT -d game
 ```
 Run some command to see how it works, like,
 ```
 show tables;
 show create table users;
-select * from users;
+show create table users_items;
+show create table items;
+select * from items;
 ```
-You can also confirm records through 'rails console'.
 
 8. Test it as local app.
-Make sure environment variables you set before are existed.
+Run it locally.
 ```
-env
-```
-If you want to use query result cache with Redis, set REDIS_HOST
-```
-export REDIS_HOST=127.0.0.1
-./bin/rails s
+PORT=8080 go run .
 ```
 Just test it, like this
+#### Check if the api server is alive
 ```
-curl localhost:3000/users
-curl localhost:3000/users/a909063e-2c25-11ed-9d6d-2bd2e05a2640
-curl -H "Content-Type: application/json" -X POST localhost:3000/users -d '{"name":"foo","address":"Japan","score":100}'
-curl -X DELETE localhost:3000/users/a909063e-2c25-11ed-9d6d-2bd2e05a2640
+curl localhost:8080/ping
+```
+#### Create a user
+```
+curl localhost:8080/api/user/foo -X POST
+```
+Note the id that you found in response.
+For here, the id would be 516c3e80-5c15-11ed-8506-071d4abd8d4a.
+#### Add an item to the user
+```
+ITEM_ID=d169f397-ba3f-413b-bc3c-a465576ef06e
+curl localhost:8080/api/user_id/516c3e80-5c15-11ed-8506-071d4abd8d4a/$ITEM_ID -X PUT
 ```
 
-## Dockernize Rails7 application
-
-![dokernize_rails7_app](diagram/rails7-as-docker.png)
-
-9. Build a docker container for production.
+#### Get all items that belongs to the user
 ```
-docker build -t user-api .
+curl localhost:8080/api/user_id/516c3e80-5c15-11ed-8506-071d4abd8d4a -X GET
 ```
 
-10. Run the docker container with enabling cache.  
-Connecting it to the network that was prepared for Redis container previously would be important.
+#### Run test it totally
 ```
-docker run -it -p 3000:3000 -e REDIS_HOST=redis -e SPANNER_EMULATOR_HOST=spanner:9010 -e RAILS_MASTER_KEY=$(cat ./config/master.key) -e GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT --network=user_api_network user-api
+go test -v
 ```
-And then, test it.  
-When you want to terminate it, just Ctrl + C.
-
-11. Completion as local development, the app looks like working well.
-
-
-## [Option] If you use VSCode, you can consider Cloud Code for Cloud Run.  
-It provides you with local development environments.  
-See [link](https://cloud.google.com/code/docs/vscode/develop-service).
-
 
 ## Deploy the app to Google Cloud
 
 1. Switch profile to actual project from local development.
 ```
-gcloud config configuration create rails-app
+gcloud config configuration create egg6-3
 gcloud confg set project $PRODUCTION_PROJECT
 ```
 Run this command in your shell, just in case.
@@ -165,55 +152,45 @@ unset SPANNER_EMULATOR_HOST
 ```
 gcloud services enable \
 spanner.googleapis.com \
-secretmanager.googleapis.com \
 run.googleapis.com \
 cloudbuild.googleapis.com \
 artifactregistry.googleapis.com \
-vpcaccess.googleapis.com \
-redis.googleapis.com
 ```
 
 3. Create a service account for Cloud Run service.
 ```
-gcloud iam service-accounts create user-api
+gcloud iam service-accounts create game-api
 ```
 Add iam policy to access Cloud Spanner instances in your project.
 ```
-export SA=user-api@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com
+export SA=game-api@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT --member=serviceAccount:$SA --role=roles/spanner.databaseUser
 ```
 
-4. Create a secret and register data to the first one.
+4. Create a spanner instance for production.
 ```
-cat ./config/master.key | gcloud secrets create RAILS_MASTER_KEY --data-file=-
-```
-
-5. Create a spanner instance for production.
-```
-gcloud spanner instances create --nodes=1 test-instance --description="for test/production" --config=regional-asia-northeast1
+gcloud spanner instances create --nodes=1 test-instance --description="for production" --config=regional-asia-northeast1
 ```
 
-6. Create database, schema etc.  
+5. Create database, schema etc.  
 Run some command as below,
+
+Prepare database.
 ```
-./bin/rails db:create RAILS_ENV=production
-./bin/rails db:migrate RAILS_ENV=production
-./bin/rails db:seed RAILS_ENV=production
+gcloud spanner databases create --instance test-instance game
 ```
+Additionally create schemas and initial data.
+```
+for schema in ./schemas/*_ddl.sql;
+do
+    spanner-cli -p $GOOGLE_CLOUD_PROJECT -i test-instance -d game < $schema
+done
+```
+
+
 You can use spanner-cli to confirm schema and data in the Cloud Spanner instance.
 ```
-spanner-cli -i test-instance -p $GOOGLE_CLOUD_PROJECT -d users
-```
-
-5. Create a VPC for Redis.
-```
-gcloud compute networks create my-network --subnet-mode=custom
-gcloud compute networks subnets create --network=my-network --region=asia-northeast1 --range=10.0.0.0/16 tokyo
-```
-
-6. Prepare a Redis host as Memotystore for Redis.
-```
-gcloud redis instances create test-redis --zone=asia-northeast1-b --network=my-network --region=asia-northeast1
+spanner-cli -i test-instance -p $GOOGLE_CLOUD_PROJECT -d game
 ```
 
 7. Create a repository on Artifact Registory.
@@ -227,36 +204,15 @@ gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 
 8. Build a docker image and push it to the repository.
 ```
-export IMAGE=asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/my-app/user-api
-docker tag user-api $IMAGE
+export IMAGE=asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/my-app/game-api
+docker tag game-api $IMAGE
 docker push $IMAGE
 ```
-
-9. Configure a Serverless Access Connector.
+9. Deploy a Cloud Run service.
 ```
-gcloud compute networks vpc-access connectors create user-api-vpc-access --network my-network --region asia-northeast1 --range 10.8.0.0/28
-```
-Add IAM policies to service account for Cloud Run.
-```
-gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT --member=serviceAccount:$SA --role=roles/compute.viewer
-gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT --member=serviceAccount:$SA --role=roles/vpcaccess.user
-```
-
-10. Add an IAM policy for the secret for Cloud Run.
-```
-gcloud secrets add-iam-policy-binding RAILS_MASTER_KEY --member=serviceAccount:$SA --role=roles/secretmanager.secretAccessor
-```
-
-11. Deploy a Cloud Run service.
-```
-VA=projects/$GOOGLE_CLOUD_PROJECT/locations/asia-northeast1/connectors/user-api-vpc-access
-REDIS_HOST=$(gcloud redis instances describe test-redis --region=asia-northeast1 --format=json | jq .host -r)
-
-gcloud beta run deploy user-api --allow-unauthenticated --region=asia-northeast1 \
---set-env-vars=GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT,REDIS_HOST=$REDIS_HOST \
---update-secrets=RAILS_MASTER_KEY=RAILS_MASTER_KEY:latest \
+gcloud beta run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
+--set-env-vars=GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT \
 --service-account=$SA --image=$IMAGE \
---vpc-connector=$VA --port=3000 \
 --min-instances=2 --cpu=2 --memory=2Gi
 ```
 
@@ -273,15 +229,15 @@ bq mk --location asia-northeast1 dataset1
 
 2. Create a Log Sink for BigQuery.
 ```
-gcloud logging sinks create user-api-sink \
+gcloud logging sinks create game-api-sink \
 bigquery.googleapis.com/projects/$GOOGLE_CLOUD_PROJECT/datasets/dataset1 \
---description="for Cloud Run service 'user-api'" \
---log-filter='resource.type="cloud_run_revision" AND resource.labels.configuration_name="user-api" AND jsonPayload.action!=""'
+--description="for Cloud Run service 'game-api'" \
+--log-filter='resource.type="cloud_run_revision" AND resource.labels.configuration_name="game-api" AND jsonPayload.action!=""'
 ```
 
 3. Grant permission for BigQuery dataEditor to the service account.
 ```
-LOGSA=$(gcloud logging sinks describe user-api-sink --format=json | jq .writerIdentity -r)
+LOGSA=$(gcloud logging sinks describe game-api-sink --format=json | jq .writerIdentity -r)
 
 gcloud projects add-iam-policy-binding $PROJECT_ID --member=$LOGSA --role=roles/bigquery.dataEditor
 ```
@@ -293,7 +249,7 @@ Maybe you need to wait for a few minutes at the first time until Log Sink starte
 
 1. Reserve your external IP address.
 ```
-gcloud compute addresses create user-api-ip \
+gcloud compute addresses create game-api-ip \
     --network-tier=PREMIUM \
     --ip-version=IPV4 \
     --global
@@ -301,52 +257,52 @@ gcloud compute addresses create user-api-ip \
 
 2. Create a Serverless NEG.
 ```
-gcloud compute network-endpoint-groups create user-api \
+gcloud compute network-endpoint-groups create game-api \
     --region=asia-northeast1 \
     --network-endpoint-type=serverless  \
-    --cloud-run-service=user-api
+    --cloud-run-service=game-api
 ```
 
 3. Create a Backend service. 
 ```
-gcloud compute backend-services create backend-for-user-api \
+gcloud compute backend-services create backend-for-game-api \
     --load-balancing-scheme=EXTERNAL \
     --global
 ```
 And register the Serverless NEG to it.
 ```
-gcloud compute backend-services add-backend backend-for-user-api \
+gcloud compute backend-services add-backend backend-for-game-api \
     --global \
-    --network-endpoint-group=user-api \
+    --network-endpoint-group=game-api \
     --network-endpoint-group-region=asia-northeast1
 ```
 
 4. Create a Urlmap.
 ```
-gcloud compute url-maps create urlmap-for-user-api \
-   --default-service backend-for-user-api
+gcloud compute url-maps create urlmap-for-game-api \
+   --default-service backend-for-game-api
 ```
 
 5. Create a Google managed SSL Certificate.
 ```
 FQDN=<your FQDN you want to use>
-gcloud compute ssl-certificates create ssl-cert-for-user-api \
+gcloud compute ssl-certificates create ssl-cert-for-game-api \
    --domains $FQDN
 ```
 
 6. Create a Target Proxy.
 ```
-gcloud compute target-https-proxies create target-proxy-for-user-api \
-   --ssl-certificates=ssl-cert-for-user-api \
-   --url-map=urlmap-for-user-api
+gcloud compute target-https-proxies create target-proxy-for-game-api \
+   --ssl-certificates=ssl-cert-for-game-api \
+   --url-map=urlmap-for-game-api
 ```
-7. Configure a forwarding rule to user-api.
+7. Configure a forwarding rule to game-api.
 ```
-gcloud compute forwarding-rules create forwarding-to-user-api \
+gcloud compute forwarding-rules create forwarding-to-game-api \
     --load-balancing-scheme=EXTERNAL \
     --network-tier=PREMIUM \
-    --address=user-api-ip \
-    --target-https-proxy=target-proxy-for-user-api \
+    --address=game-api-ip \
+    --target-https-proxy=target-proxy-for-game-api \
     --global \
     --ports=443
 ```
@@ -354,7 +310,7 @@ gcloud compute forwarding-rules create forwarding-to-user-api \
 8. Update DNS record.  
 Find the IP address your Load Balancer uses.
 ```
-gcloud compute addresses describe user-api-ip --global --format=json | jq .address -r
+gcloud compute addresses describe game-api-ip --global --format=json | jq .address -r
 ```
 You need to register this IP address corresponding to your FQDN record.  
 It depends on the way to manage your DNS.
