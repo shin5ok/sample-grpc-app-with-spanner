@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  
+  spanner:
+    image: gcr.io/cloud-spanner-emulator/emulator
+    ports:
+      - 9010:9010
+      - 9020:9020
+    networks:
+      - user_api_network
+
+networks:
+  user_api_network:
+    name: user_api_network
