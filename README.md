@@ -64,7 +64,7 @@ PRODUCTION_PROJECT=$GOOGLE_CLOUD_PROJECT
 export SPANNER_EMULATOR_HOST=localhost:9010
 export GOOGLE_CLOUD_PROJECT=your-project-id
 ```
-It wll make API calls of Spanner direct to local emulator.
+It will make API calls of Spanner direct to local emulator.
 
 5. Create a Cloud Spanner instance in local emulator.
 ```
@@ -83,7 +83,7 @@ gcloud spanner databases create --instance test-instance game
 ```
 Additionally create schemas and initial data.
 ```
-for schema in ./schemas/*_ddl.sql;
+for schema in ./schemas/*.sql;
 do
     spanner-cli -p $GOOGLE_CLOUD_PROJECT -i test-instance -d game < $schema
 done
@@ -107,28 +107,30 @@ select * from items;
 8. Test it as local app.
 Run it locally.
 ```
+export SPANNER_STRING=projects/$GOOGLE_CLOUD_PROJECT/instances/test-instance/databases/game
 PORT=8080 go run .
 ```
 Just test it, like this
 #### Check if the api server is alive
 ```
-curl localhost:8080/ping
+curl http://localhost:8080/ping
 ```
 #### Create a user
 ```
-curl localhost:8080/api/user/foo -X POST
+curl http://localhost:8080/api/user/foo -X POST
 ```
-Note the id that you found in response.
-For here, the id would be 516c3e80-5c15-11ed-8506-071d4abd8d4a.
+Note the id that you found in response.  
+The id might be like 516c3e80-5c15-11ed-8506-071d4abd8d4a.
 #### Add an item to the user
 ```
+USER_ID=<your user id>
 ITEM_ID=d169f397-ba3f-413b-bc3c-a465576ef06e
-curl localhost:8080/api/user_id/516c3e80-5c15-11ed-8506-071d4abd8d4a/$ITEM_ID -X PUT
+curl http://localhost:8080/api/user_id/$USER_ID/$ITEM_ID -X PUT
 ```
 
 #### Get all items that belongs to the user
 ```
-curl localhost:8080/api/user_id/516c3e80-5c15-11ed-8506-071d4abd8d4a -X GET
+curl http://localhost:8080/api/user_id/$USER_ID -X GET
 ```
 
 #### Run test it totally
@@ -141,10 +143,12 @@ go test -v
 1. Switch profile to actual project from local development.
 ```
 gcloud config configurations create egg6-3
-gcloud confg set project $PRODUCTION_PROJECT
+gcloud config set project $PRODUCTION_PROJECT
 ```
 Run this command in your shell, just in case.
 ```
+export GOOGLE_CLOUD_PROJECT=$PRODUCTION_PROJECT
+export SPANNER_STRING=projects/$GOOGLE_CLOUD_PROJECT/instances/test-instance/databases/game
 unset SPANNER_EMULATOR_HOST
 ```
 
@@ -154,7 +158,7 @@ gcloud services enable \
 spanner.googleapis.com \
 run.googleapis.com \
 cloudbuild.googleapis.com \
-artifactregistry.googleapis.com \
+artifactregistry.googleapis.com
 ```
 
 3. Create a service account for Cloud Run service.
@@ -181,42 +185,46 @@ gcloud spanner databases create --instance test-instance game
 ```
 Additionally create schemas and initial data.
 ```
-for schema in ./schemas/*_ddl.sql;
+for schema in ./schemas/*.sql;
 do
     spanner-cli -p $GOOGLE_CLOUD_PROJECT -i test-instance -d game < $schema
 done
 ```
-
 
 You can use spanner-cli to confirm schema and data in the Cloud Spanner instance.
 ```
 spanner-cli -i test-instance -p $GOOGLE_CLOUD_PROJECT -d game
 ```
 
-7. Create a repository on Artifact Registory.
+6. Deploy a Cloud Run service.
+- Option1: With buildpacks
+```
+gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
+--set-env-vars=SPANNER_STRING=$SPANNER_STRING \
+--service-account=$SA --source=. \
+--min-instances=2 --cpu=2 --memory=2Gi
+```
+- Option2: With Dockerfile as the general way  
+  Create a repo on Artifact Registory and grant push on local env.  
 ```
 gcloud artifacts repositories create my-app --repository-format=docker --location=asia-northeast1
-```
-Set up your local docker environment to push images to/pull images from the repository.
-```
 gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 ```
-
-8. Build a docker image and push it to the repository.
+  Build a container.
 ```
-export IMAGE=asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/my-app/game-api
+IMAGE=asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/my-app/game-api
 docker tag game-api $IMAGE
 docker push $IMAGE
 ```
-9. Deploy a Cloud Run service.
+  Deploy it to Cloud Run service.
 ```
-gcloud beta run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
---set-env-vars=GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT \
---service-account=$SA --image=$IMAGE \
+gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
+--set-env-vars=SPANNER_STRING=$SPANNER_STRING \
+--service-account=$SA --image $IMAGE \
 --min-instances=2 --cpu=2 --memory=2Gi
 ```
 
-12. Congratulation!!  
+7. Congratulation!!  
 Just test it.
 
 
@@ -232,7 +240,7 @@ bq mk --location asia-northeast1 dataset1
 gcloud logging sinks create game-api-sink \
 bigquery.googleapis.com/projects/$GOOGLE_CLOUD_PROJECT/datasets/dataset1 \
 --description="for Cloud Run service 'game-api'" \
---log-filter='resource.type="cloud_run_revision" AND resource.labels.configuration_name="game-api" AND jsonPayload.action!=""'
+--log-filter='resource.type="cloud_run_revision" AND resource.labels.configuration_name="game-api" AND jsonPayload.message!=""'
 ```
 
 3. Grant permission for BigQuery dataEditor to the service account.
