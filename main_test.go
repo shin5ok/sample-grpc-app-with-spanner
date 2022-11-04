@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	"cloud.google.com/go/spanner"
@@ -22,15 +23,23 @@ import (
 )
 
 var (
-	fakeDbString = "projects/your-project-id/instances/test-instance/databases/game_dummy"
+	fakeDbString = os.Getenv("SPANNER_STRING")
 	fakeServing  Serving
+	isEmulator   = false
 
 	itemTestID = "d169f397-ba3f-413b-bc3c-a465576ef06e"
 	userTestID string
 )
 
 func init() {
-	os.Setenv("SPANNER_EMULATOR_HOST", "localhost:9010")
+	/*
+	 for local emulator:
+	 export SPANNER_STRING=projects/your-project-id/instances/test-instance/databases/game-dummy
+	*/
+	if match, _ := regexp.MatchString("^projects/your-project-id/", fakeDbString); match {
+		os.Setenv("SPANNER_EMULATOR_HOST", "localhost:9010")
+		isEmulator = true
+	}
 	ctx := context.Background()
 
 	client, err := spanner.NewClient(ctx, fakeDbString)
@@ -132,6 +141,9 @@ func Test_getUserItems(t *testing.T) {
 func Test_cleaning(t *testing.T) {
 	t.Cleanup(
 		func() {
+			if !isEmulator {
+				return
+			}
 			ctx := context.Background()
 			if err := testutil.DropData(ctx, fakeDbString); err != nil {
 				t.Error(err)
