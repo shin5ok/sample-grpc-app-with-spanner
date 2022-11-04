@@ -1,4 +1,3 @@
-from re import I
 from diagrams import Cluster, Diagram
 from diagrams.gcp.analytics import BigQuery
 from diagrams.gcp.compute import Run
@@ -11,16 +10,11 @@ with Diagram("", show=False):
     lb = LoadBalancing("Google Cloud Load Balancing")
 
     with Cluster("Application"):
-        run = Run("user-api")
+        run = Run("game-api")
         spanner = Spanner("game")
-    
-    with Cluster("Cache Layer"):
-        with Cluster("VPC"):
-            redis = Memorystore("Redis")
     
     lb >> run
     run >> spanner
-    run >> redis
 
     with Cluster("Data"):
         bq = BigQuery("BigQuery")
