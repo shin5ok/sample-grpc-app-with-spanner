@@ -69,7 +69,7 @@ func Test_createUser(t *testing.T) {
 	ctx.URLParams.Add("user_name", path)
 
 	r := &http.Request{}
-	req, err := http.NewRequestWithContext(r.Context(), "POST", "/api/users/"+path, nil)
+	req, err := http.NewRequestWithContext(r.Context(), "POST", "/api/user/"+path, nil)
 	assert.Nil(t, err)
 	newReq := req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
 
@@ -94,7 +94,7 @@ func Test_addItemUser(t *testing.T) {
 	ctx.URLParams.Add("item_id", itemTestID)
 
 	r := &http.Request{}
-	uriPath := fmt.Sprintf("/api/users/%s/%s", userTestID, itemTestID)
+	uriPath := fmt.Sprintf("/api/user_id/%s/%s", userTestID, itemTestID)
 	req, err := http.NewRequestWithContext(r.Context(), "PUT", uriPath, nil)
 	assert.Nil(t, err)
 	newReq := req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
@@ -115,7 +115,7 @@ func Test_getUserItems(t *testing.T) {
 	ctx.URLParams.Add("user_id", userTestID)
 
 	r := &http.Request{}
-	uriPath := fmt.Sprintf("/api/users/%s", userTestID)
+	uriPath := fmt.Sprintf("/api/user_id/%s", userTestID)
 	req, err := http.NewRequestWithContext(r.Context(), "GET", uriPath, nil)
 	assert.Nil(t, err)
 	newReq := req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))

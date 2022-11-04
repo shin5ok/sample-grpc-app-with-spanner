@@ -63,11 +63,11 @@ func main() {
 
 	r.Get("/ping", s.pingPong)
 
-	r.Get("/api/users/{user_id:[a-z0-9-.]+}", s.getUserItems)
+	r.Get("/api/user_id/{user_id:[a-z0-9-.]+}", s.getUserItems)
 
-	r.Post("/api/users/{user_name:[a-z0-9-.]+}", s.createUser)
+	r.Post("/api/user/{user_name:[a-z0-9-.]+}", s.createUser)
 
-	r.Put("/api/users/{user_id:[a-z0-9-.]+}/{item_id:[a-z0-9-.]+}", s.addItemToUser)
+	r.Put("/api/user_id/{user_id:[a-z0-9-.]+}/{item_id:[a-z0-9-.]+}", s.addItemToUser)
 
 	if err := http.ListenAndServe(":"+servicePort, r); err != nil {
 		oplog.Err(err)
