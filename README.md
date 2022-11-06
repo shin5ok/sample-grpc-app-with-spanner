@@ -15,6 +15,8 @@ gcloud auth login
 gcloud auth application-default login
 ```
 2. Install spanner-cli
+If you don't have 'go', you need to install the latest one.  
+https://go.dev/doc/install
 ```
 go install github.com/cloudspannerecosystem/spanner-cli@latest
 export PATH=$PATH:~/go/bin
@@ -203,8 +205,7 @@ spanner-cli -i test-instance -p $GOOGLE_CLOUD_PROJECT -d game
 ```
 gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
 --set-env-vars=SPANNER_STRING=$SPANNER_STRING \
---service-account=$SA --source=. \
---min-instances=2 --cpu=2 --memory=2Gi
+--service-account=$SA --source=.
 ```
 - Option2: With Dockerfile as the general way  
   Create a repo on Artifact Registory and grant push on local env.  
@@ -223,8 +224,7 @@ docker push $IMAGE
 ```
 gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
 --set-env-vars=SPANNER_STRING=$SPANNER_STRING \
---service-account=$SA --image $IMAGE \
---min-instances=2 --cpu=2 --memory=2Gi
+--service-account=$SA --image $IMAGE
 ```
 
 7. Congratulation!!  
