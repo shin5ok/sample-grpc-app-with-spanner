@@ -259,6 +259,8 @@ That's all, you can access the api and you will see all logs in BigQuery tables.
 Maybe you need to wait for a few minutes at the first time until Log Sink started.
 
 ## **Appendix**: Attach Google Cloud Load Balancer with Google Managed SSL certificate
+### Note: requirement to pass the step.
+Need to prepare a domain zone that you have authorization of because it's going to use your custom domain.
 
 1. Reserve your external IP address.
 ```
@@ -325,7 +327,8 @@ Find the IP address your Load Balancer uses.
 ```
 gcloud compute addresses describe game-api-ip --global --format=json | jq .address -r
 ```
-You need to register this IP address corresponding to your FQDN record.  
+You need to register this IP address corresponding to your FQDN record to your DNS zone.  
 It depends on the way to manage your DNS.  
-You can use any favorite DNS service that you have authority for.
 
+It also take a while to become to active the certification.  
+You might see 50x response until that.
