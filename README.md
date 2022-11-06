@@ -4,7 +4,7 @@
 - Local Development
 - Deploy to production
 - Transfer logging to Google BigQuery
-- Appendix: Attach Google Cloud Load Balancer with Google Managed SSL certificate
+- **Appendix**: Attach Google Cloud Load Balancer with Google Managed SSL certificate
 
 ![architecture_diagram](diagram/production-env.png)
 
@@ -24,7 +24,7 @@ export PATH=$PATH:~/go/bin
 export GOOGLE_CLOUD_PROJECT=<your-project>
 ```
 
-4. Clone this code.
+4. Clone this code to your local.
 ```
 git clone https://github.com/shin5ok/egg6-architecting
 ```
@@ -138,7 +138,7 @@ go test -v
 
 ## Deploy the app to Google Cloud
 
-1. Switch profile to actual project from local development.
+1. Switch profile to Production project.
 ```
 gcloud config configurations create egg6-3
 gcloud config set project $PRODUCTION_PROJECT
@@ -177,11 +177,11 @@ gcloud spanner instances create --nodes=1 test-instance --description="for produ
 5. Create database, schema etc.  
 Run some command as below,
 
-Prepare database.
+5-1. Prepare database.
 ```
 gcloud spanner databases create --instance test-instance game
 ```
-Additionally create schemas and initial data.
+5-2. Additionally create schemas and initial data.
 ```
 for schema in ./schemas/*.sql;
 do
@@ -189,7 +189,7 @@ do
 done
 ```
 
-You can use spanner-cli to confirm schema and data in the Cloud Spanner instance.
+5-3. You can use spanner-cli to confirm schema and data in the Cloud Spanner instance.
 ```
 spanner-cli -i test-instance -p $GOOGLE_CLOUD_PROJECT -d game
 ```
@@ -253,7 +253,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member=$LOGSA --role=roles/
 That's all, you can access the api and you will see all logs in BigQuery tables.  
 Maybe you need to wait for a few minutes at the first time until Log Sink started.
 
-## Appendix: Attach Google Cloud Load Balancer with Google Managed SSL certificate
+## **Appendix**: Attach Google Cloud Load Balancer with Google Managed SSL certificate
 
 1. Reserve your external IP address.
 ```
