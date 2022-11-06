@@ -24,6 +24,11 @@ export PATH=$PATH:~/go/bin
 export GOOGLE_CLOUD_PROJECT=<your-project>
 ```
 
+Save the value just in case when switching environment.
+```
+export PRODUCTION_PROJECT=$GOOGLE_CLOUD_PROJECT
+```
+
 4. Clone this code to your local.
 ```
 git clone https://github.com/shin5ok/egg6-architecting
@@ -58,7 +63,6 @@ Check if the version support some features we use.
 
 4. Set environment variable for the Cloud Spanner emulator.
 ```
-PRODUCTION_PROJECT=$GOOGLE_CLOUD_PROJECT
 export SPANNER_EMULATOR_HOST=localhost:9010
 export GOOGLE_CLOUD_PROJECT=your-project-id
 ```
@@ -211,6 +215,7 @@ gcloud auth configure-docker asia-northeast1-docker.pkg.dev
   Build a container.
 ```
 IMAGE=asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/my-app/game-api
+docker build -t game-api -f Dockerfile.option2
 docker tag game-api $IMAGE
 docker push $IMAGE
 ```
