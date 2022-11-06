@@ -215,7 +215,7 @@ gcloud auth configure-docker asia-northeast1-docker.pkg.dev
   Build a container.
 ```
 IMAGE=asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/my-app/game-api
-docker build -t game-api -f Dockerfile.option2
+docker build -t game-api -f Dockerfile.option2 .
 docker tag game-api $IMAGE
 docker push $IMAGE
 ```
