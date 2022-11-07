@@ -13,7 +13,7 @@
 gcloud auth login
 gcloud auth application-default login
 ```
-2. Spanner cli のインストール
+2. spanner-cli のインストール  
 もし、Go をインストールしていない場合はこちら  
 https://go.dev/doc/install
 ```
@@ -76,9 +76,17 @@ do
 done
 ```
 
-  Spanner cli を利用して、スキーマとデータを確認します
+  spanner-cli を利用して、スキーマとデータを確認します
 ```
 spanner-cli -i test-instance -p $GOOGLE_CLOUD_PROJECT -d game
+```
+  コマンド例
+```
+show tables;
+show create table users;
+show create table users_items;
+show create table items;
+select * from items;
 ```
 
 6. Cloud Run サービスをデプロイ
@@ -118,6 +126,29 @@ gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
 Cloud Run サービスに割り当てられた URL は以下のようになります  
 "https://game-api-xxxxxxxxx-xx.a.run.app".
 
+テストのため、変数に URL をセット  
+（以下は例です）
+```
+URL="https://game-api-xxxxxxxxx-xx.a.run.app"
+```
+
+- ユーザーを作成
+```
+curl $URL/api/user/foo -X POST
+```
+レスポンスに生成された ID が含まれています  
+形式は UUIDv4 です
+- ユーザーにアイテムの追加（購入）
+```
+USER_ID=<your user id>
+ITEM_ID=d169f397-ba3f-413b-bc3c-a465576ef06e
+curl $URL/api/user_id/$USER_ID/$ITEM_ID -X PUT
+```
+
+- ユーザーが購入したアイテムのリストを取得
+```
+curl $URL/api/user_id/$USER_ID -X GET
+```
 
 ## Google BigQuery へのログの転送
 
