@@ -8,37 +8,37 @@
 ![architecture_diagram](diagram/production-env.png)
 
 ## スタート前の準備
-1. プロジェクトへのサインイン
+### 1. プロジェクトへのサインイン
 ```
 gcloud auth login
 gcloud auth application-default login
 ```
-2. spanner-cli のインストール  
+### 2. spanner-cli のインストール  
 もし、Go をインストールしていない場合はこちら  
 https://go.dev/doc/install
 ```
 go install github.com/cloudspannerecosystem/spanner-cli@latest
 export PATH=$PATH:~/go/bin
 ```
-3. 環境変数の設定
+### 3. 環境変数の設定
 ```
 export GOOGLE_CLOUD_PROJECT=<your-project>
 ```
 
-4. リポジトリをローカルへ clone
+### 4. リポジトリをローカルへ clone
 ```
 git clone https://github.com/shin5ok/egg6-architecting
 ```
 
 ## アプリケーションのデプロイ
 
-1. gcloud コマンドの環境作成と設定
+### 1. gcloud コマンドの環境作成と設定
 ```
 gcloud config configurations create egg6-3
 gcloud config set project $GOOGLE_CLOUD_PROJECT
 ```
 
-2. 必要な Google Cloud のサービスを有効化
+### 2. 必要な Google Cloud のサービスを有効化
 ```
 gcloud services enable \
 spanner.googleapis.com \
@@ -47,7 +47,7 @@ cloudbuild.googleapis.com \
 artifactregistry.googleapis.com
 ```
 
-3. Cloud Run サービスで使うサービスアカウントを有効化
+### 3. Cloud Run サービスで使うサービスアカウントを有効化
 ```
 gcloud iam service-accounts create game-api
 ```
@@ -57,18 +57,18 @@ export SA=game-api@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT --member=serviceAccount:$SA --role=roles/spanner.databaseUser
 ```
 
-4. Cloud Spanner インスタンスを作成
+### 4. Cloud Spanner インスタンスを作成
 ```
 gcloud spanner instances create --nodes=1 test-instance --description="for production" --config=regional-asia-northeast1
 ```
 
-5. Cloud Spanner インスタンスに、データベースとスキーマを作成して、初期データを登録
+### 5. Cloud Spanner インスタンスに、データベースとスキーマを作成して、初期データを登録
 
-  データベースを準備
+#### データベースを準備
 ```
 gcloud spanner databases create --instance test-instance game
 ```
-  スキーマを作成し、初期データを登録
+#### スキーマを作成し、初期データを登録
 ```
 for schema in ./schemas/*.sql;
 do
@@ -80,7 +80,7 @@ done
 ```
 spanner-cli -i test-instance -p $GOOGLE_CLOUD_PROJECT -d game
 ```
-  コマンド例
+#### コマンド例
 ```
 show tables;
 show create table users;
@@ -89,13 +89,13 @@ show create table items;
 select * from items;
 ```
 
-6. Cloud Run サービスをデプロイ
+### 6. Cloud Run サービスをデプロイ
 アプリケーションで利用する環境変数を設定
 ```
 export SPANNER_STRING=projects/$GOOGLE_CLOUD_PROJECT/instances/test-instance/databases/game
 ```
 
-- オプション1: buildpacks を利用
+- オプション1: ***buildpacks*** を利用
 ```
 gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
 --set-env-vars=SPANNER_STRING=$SPANNER_STRING \
@@ -107,21 +107,21 @@ gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
 gcloud artifacts repositories create my-app --repository-format=docker --location=asia-northeast1
 gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 ```
-  コンテナのビルド
+#### コンテナのビルド
 ```
 IMAGE=asia-northeast1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/my-app/game-api
 docker build -t game-api -f Dockerfile.option2 .
 docker tag game-api $IMAGE
 docker push $IMAGE
 ```
-  Cloud Run サービスへのデプロイ
+#### Cloud Run サービスへのデプロイ
 ```
 gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
 --set-env-vars=SPANNER_STRING=$SPANNER_STRING \
 --service-account=$SA --image $IMAGE
 ```
 
-7. おめでとう!!  
+### 7. おめでとう!!  
 テストしましょう  
 Cloud Run サービスに割り当てられた URL は以下のようになります  
 "https://game-api-xxxxxxxxx-xx.a.run.app".
@@ -152,12 +152,12 @@ curl $URL/api/user_id/$USER_ID -X GET
 
 ## Google BigQuery へのログの転送
 
-1. ログの転送先として、BigQueyr へデータセットを作成
+### 1. ログの転送先として、BigQueyr へデータセットを作成
 ```
 bq mk --location asia-northeast1 dataset1
 ```
 
-2. ログシンクを作成します
+### 2. ログシンクを作成します
 ```
 gcloud logging sinks create game-api-sink \
 bigquery.googleapis.com/projects/$GOOGLE_CLOUD_PROJECT/datasets/dataset1 \
@@ -165,7 +165,7 @@ bigquery.googleapis.com/projects/$GOOGLE_CLOUD_PROJECT/datasets/dataset1 \
 --log-filter='resource.type="cloud_run_revision" AND resource.labels.configuration_name="game-api" AND jsonPayload.message!=""'
 ```
 
-3. ログシンクが利用する サービスアカウントへ、BigQuery への書き込み権限（dataEditor）を付与
+### 3. ログシンクが利用する サービスアカウントへ、BigQuery への書き込み権限（BigQuery dataEditor）を付与
 ```
 LOGSA=$(gcloud logging sinks describe game-api-sink --format=json | jq .writerIdentity -r)
 
@@ -174,13 +174,15 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member=$LOGSA --role=roles/
 
 以上で完了です  
 転送されたログを BigQuery テーブルで確認しましょう  
-もしかしたら、転送が始まるまで、数分待つ必要があるかもしれません
+もしかすると、転送が始まるまで、数分待つ必要があるかもしれません
+
+
 
 ## **オプション**: マネージド証明書付きの Google Cloud LoadBalancer のデプロイ
 ### 注意: このステップに必要な要件
 カスタムドメインの利用のため、あなたが権限をもつドメインのゾーンが必要です
 
-1. 外部 IP アドレスの予約
+### 1. 外部 IP アドレスの予約
 ```
 gcloud compute addresses create game-api-ip \
     --network-tier=PREMIUM \
@@ -188,7 +190,7 @@ gcloud compute addresses create game-api-ip \
     --global
 ```
 
-2. Cloud Run サービスを、ロードバランサーのターゲットにするための サーバーレス NEG を準備
+### 2. Cloud Run サービスを、ロードバランサーのターゲットにするための サーバーレス NEG を準備
 ```
 gcloud compute network-endpoint-groups create game-api \
     --region=asia-northeast1 \
@@ -196,7 +198,7 @@ gcloud compute network-endpoint-groups create game-api \
     --cloud-run-service=game-api
 ```
 
-3. ロードバランサーのバックエンドサービスを作成
+### 3. ロードバランサーのバックエンドサービスを作成
 ```
 gcloud compute backend-services create backend-for-game-api \
     --load-balancing-scheme=EXTERNAL \
@@ -210,28 +212,28 @@ gcloud compute backend-services add-backend backend-for-game-api \
     --network-endpoint-group-region=asia-northeast1
 ```
 
-4. URL マップを作成  
+### 4. URL マップを作成  
 デフォルトの転送先として、先ほど作成したバックエンドサービスを指定
 ```
 gcloud compute url-maps create urlmap-for-game-api \
    --default-service backend-for-game-api
 ```
 
-5. マネージド証明書の作成
+### 5. マネージド証明書の作成
 ```
 FQDN=<your FQDN you want to use>
 gcloud compute ssl-certificates create ssl-cert-for-game-api \
    --domains $FQDN
 ```
 
-6. ターゲット Proxy を作成
+### 6. ターゲット Proxy を作成
 ```
 gcloud compute target-https-proxies create target-proxy-for-game-api \
    --ssl-certificates=ssl-cert-for-game-api \
    --url-map=urlmap-for-game-api
 ```
 
-7. 転送ルールを作成
+### 7. 転送ルールを作成
 ```
 gcloud compute forwarding-rules create forwarding-to-game-api \
     --load-balancing-scheme=EXTERNAL \
@@ -242,7 +244,7 @@ gcloud compute forwarding-rules create forwarding-to-game-api \
     --ports=443
 ```
 
-8. DNS レコードをアップデート  
+### 8. DNS レコードをアップデート  
 Find the IP address your Load Balancer uses.
 ロードバランサーが利用している IP アドレスを抽出  
 （確保した外部 IP アドレスと同じになるはず）
