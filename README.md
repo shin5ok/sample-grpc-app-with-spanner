@@ -14,14 +14,14 @@
 gcloud auth login
 gcloud auth application-default login
 ```
-2. Install spanner-cli
+2. Install spanner-cli.  
 If you don't have 'go', you need to install the latest one.  
 https://go.dev/doc/install
 ```
 go install github.com/cloudspannerecosystem/spanner-cli@latest
 export PATH=$PATH:~/go/bin
 ```
-3. Set your environment
+3. Set your environment variables.
 ```
 export GOOGLE_CLOUD_PROJECT=<your-project>
 ```
@@ -94,7 +94,7 @@ done
 ```
 
 
-7. Make sure if the emulator works on local environment.
+7. Make sure if the emulator works on local environment.  
 Login to the emulator.
 ```
 spanner-cli -i test-instance -p $GOOGLE_CLOUD_PROJECT -d game
@@ -114,30 +114,30 @@ Run it locally.
 export SPANNER_STRING=projects/$GOOGLE_CLOUD_PROJECT/instances/test-instance/databases/game
 PORT=8080 go run .
 ```
-Just test it, like this
-#### Check if the api server is alive
+9. Test it.
+- Check if the api server is alive
 ```
 curl http://localhost:8080/ping
 ```
-#### Create a user
+- Create a user
 ```
 curl http://localhost:8080/api/user/foo -X POST
 ```
 Note the id that you found in response.  
 The id might be like 516c3e80-5c15-11ed-8506-071d4abd8d4a.
-#### Add an item to the user
+- Add an item to the user
 ```
 USER_ID=<your user id>
 ITEM_ID=d169f397-ba3f-413b-bc3c-a465576ef06e
 curl http://localhost:8080/api/user_id/$USER_ID/$ITEM_ID -X PUT
 ```
 
-#### Get all items that belongs to the user
+- Get all items that belongs to the user
 ```
 curl http://localhost:8080/api/user_id/$USER_ID -X GET
 ```
 
-#### Run test it totally
+- Run test it totally
 ```
 go test -v
 ```
