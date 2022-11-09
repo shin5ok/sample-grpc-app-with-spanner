@@ -152,7 +152,7 @@ curl $URL/api/user_id/$USER_ID -X GET
 
 ## Google BigQuery へのログの転送
 
-### 1. ログの転送先として、BigQueyr へデータセットを作成
+### 1. ログの転送先として、BigQuery へデータセットを作成
 ```
 bq mk --location asia-northeast1 dataset1
 ```
