@@ -255,5 +255,18 @@ gcloud compute addresses describe game-api-ip --global --format=json | jq .addre
 この IP アドレスと、FQDNが一致するように、カスタムドメインの DNS レコードを書き換え、反映  
 方法は、DNS サーバーや、そのサービスを提供するプロバイダーに依存します
 
-証明書が有効になるまで、しばらくかかります  
-それまではアクセスしても、5xx レコードが返却されることがあります
+もし Cloud DNS を使っている場合は、下記のようなコマンドで管理ゾーンを作成し、上記の IP アドレスに対応するレコードを追加できます
+```
+gcloud dns managed-zones create <your-zone-name> --dns-name=<your-domain-name> --description="My Domain"
+gcloud dns record-sets create --type=A --zone=<your-zone-name> --rrdatas=<IP address> $FQDN
+```
+作成したドメインの NS レコードを、上位の権威 DNS に登録することを忘れないでください  
+この NS レコードは、こちらのコマンドで取得できます
+```
+gcloud dns managed-zones describe <your-zone-name> --format=json | jq -r .nameServers[]
+```
+複数の NS レコードすべてを登録します
+
+証明書が有効になるまで、しばらくかかります（通常 10分以上）  
+それまではアクセスしても、4xx/5xx レコード返却されたり、SSL エラーになります
+
