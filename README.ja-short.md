@@ -245,7 +245,6 @@ gcloud compute forwarding-rules create forwarding-to-game-api \
 ```
 
 ### 8. DNS レコードをアップデート  
-Find the IP address your Load Balancer uses.
 ロードバランサーが利用している IP アドレスを抽出  
 （確保した外部 IP アドレスと同じになるはず）
 
