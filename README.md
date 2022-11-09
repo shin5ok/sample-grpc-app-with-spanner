@@ -330,5 +330,17 @@ gcloud compute addresses describe game-api-ip --global --format=json | jq .addre
 You need to register this IP address corresponding to your FQDN record to your DNS zone.  
 It depends on the way to manage your DNS.  
 
+If you use Cloud DNS, you can create your managed zone and a record corresponding to this IP address.
+like this,
+```
+gcloud dns managed-zones create <your-zone-name> --dns-name=<your-domain-name> --description="My Domain"
+gcloud dns record-sets create --type=A --zone=<your-zone-name> --rrdatas=<IP address> $FQDN
+```
+Make sure that you register the NS records corresponding to your domain to authoritative DNS.
+You will get the NS records by this command,
+```
+gcloud dns managed-zones describe <your-zone-name> --format=json | jq -r .nameServers[]
+```
+
 It also take a while to become to active the certification.  
-You might see 50x response until that.
+You might see 4xx/5xx response or SSL error until that.
