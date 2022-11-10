@@ -92,7 +92,7 @@ func (s Serving) getUserItems(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s Serving) createUser(w http.ResponseWriter, r *http.Request) {
-	userId, _ := uuid.NewUUID()
+	userId, _ := uuid.NewRandom()
 	userName := chi.URLParam(r, "user_name")
 	ctx := r.Context()
 	err := s.Client.createUser(ctx, w, userParams{userID: userId.String(), userName: userName})
