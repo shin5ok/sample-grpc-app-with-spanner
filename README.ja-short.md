@@ -96,7 +96,8 @@ export SPANNER_STRING=projects/$GOOGLE_CLOUD_PROJECT/instances/test-instance/dat
 ```
 
 #### ***オプション1***: ***buildpacks*** を利用
-Dockerfile なしで、コンテナをビルド、Cloud Run にデプロイ
+Dockerfile なしで、コンテナを自動ビルド、Cloud Run にデプロイ  
+オプション2に比べて、時間がかかります
 ```
 gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
 --set-env-vars=SPANNER_STRING=$SPANNER_STRING \
@@ -126,7 +127,7 @@ gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
 
 ### 7. おめでとう!!  
 テストしましょう  
-Cloud Run サービスに割り当てられた URL は以下のようになります  
+Cloud Run サービスに割り当てられた URL は以下のような文字列になります  
 "https://game-api-xxxxxxxxx-xx.a.run.app".
 
 テストのため、変数に URL をセット  
