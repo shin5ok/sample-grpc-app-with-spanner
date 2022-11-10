@@ -95,14 +95,17 @@ select * from items;
 export SPANNER_STRING=projects/$GOOGLE_CLOUD_PROJECT/instances/test-instance/databases/game
 ```
 
-- オプション1: ***buildpacks*** を利用
+#### ***オプション1***: ***buildpacks*** を利用
+Dockerfile なしで、コンテナをビルド、Cloud Run にデプロイ
 ```
 gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
 --set-env-vars=SPANNER_STRING=$SPANNER_STRING \
 --service-account=$SA --source=.
 ```
-- オプション2: 従来どおり Dockerfile を利用
-  Artifact Registry へのリポジトリの作成と、それを利用する準備
+以上  
+7 に進みます
+#### ***オプション2***: 従来どおり Dockerfile を利用
+Artifact Registry へのリポジトリの作成と、それを利用する準備
 ```
 gcloud artifacts repositories create my-app --repository-format=docker --location=asia-northeast1
 gcloud auth configure-docker asia-northeast1-docker.pkg.dev
