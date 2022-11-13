@@ -38,7 +38,7 @@ func genStr() string {
 	if err != nil {
 		panic(err)
 	}
-	return string(id) + time.Now().Format("200601021504")
+	return string(id) + time.Now().Format("2006-01-02")
 }
 
 func init() {
