@@ -9,6 +9,7 @@ require (
 	github.com/go-chi/httplog v0.2.5
 	github.com/go-chi/render v1.0.2
 	github.com/google/uuid v1.3.0
+	github.com/matoous/go-nanoid v1.5.0
 	github.com/prometheus/client_golang v1.13.0
 	github.com/stretchr/testify v1.7.0
 	google.golang.org/api v0.96.0

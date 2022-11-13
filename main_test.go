@@ -15,30 +15,41 @@ import (
 	"path/filepath"
 	"regexp"
 	"testing"
+	"time"
 
 	"cloud.google.com/go/spanner"
 	"github.com/go-chi/chi/v5"
+	gonanoid "github.com/matoous/go-nanoid"
 	"github.com/shin5ok/egg6-architecting/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	fakeDbString = os.Getenv("SPANNER_STRING")
+	fakeDbString = os.Getenv("SPANNER_STRING") + genStr()
 	fakeServing  Serving
-	isEmulator   = false
 
 	itemTestID = "d169f397-ba3f-413b-bc3c-a465576ef06e"
 	userTestID string
 )
+
+func genStr() string {
+	var src = "abcdefghijklmnopqrstuvwxyz09123456789"
+	id, err := gonanoid.Generate(src, 6)
+	if err != nil {
+		panic(err)
+	}
+	return string(id) + time.Now().Format("200601021504")
+}
 
 func init() {
 	/*
 	 for local emulator:
 	 export SPANNER_STRING=projects/your-project-id/instances/test-instance/databases/game-dummy
 	*/
+	log.Println("Creating " + fakeDbString)
+
 	if match, _ := regexp.MatchString("^projects/your-project-id/", fakeDbString); match {
 		os.Setenv("SPANNER_EMULATOR_HOST", "localhost:9010")
-		isEmulator = true
 	}
 	ctx := context.Background()
 
@@ -141,9 +152,6 @@ func Test_getUserItems(t *testing.T) {
 func Test_cleaning(t *testing.T) {
 	t.Cleanup(
 		func() {
-			if !isEmulator {
-				return
-			}
 			ctx := context.Background()
 			if err := testutil.DropData(ctx, fakeDbString); err != nil {
 				t.Error(err)
