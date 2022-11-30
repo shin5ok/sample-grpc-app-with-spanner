@@ -64,7 +64,7 @@ resource "google_cloud_run_service" "game_api" {
         image = "us-docker.pkg.dev/cloudrun/container/hello"
         resources {
           limits = {
-            cpu    = "500m"
+            cpu    = "1000m"
             memory = "1028M"
           }
         }
@@ -87,7 +87,7 @@ resource "google_cloud_run_service_iam_binding" "run_iam_binding" {
 }
 
 resource "google_service_account" "run_sa" {
-  account_id = "user-api"
+  account_id = "game-api"
 }
 
 resource "google_project_iam_member" "binding_run_sa" {
