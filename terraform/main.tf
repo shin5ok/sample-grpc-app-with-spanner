@@ -42,8 +42,9 @@ resource "google_project_service" "service" {
 }
 
 resource "google_spanner_instance" "test_instance" {
-  config           = "regional-${var.region}"
   display_name     = "test-instance"
+  name             = "test-instance"
+  config           = "regional-${var.region}"
   processing_units = 100
   labels = {
     "environment" = "development"
