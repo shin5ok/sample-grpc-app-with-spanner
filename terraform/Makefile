@@ -1,3 +1,4 @@
+.PHONY: init
 init:
 	@echo "Preparing environment of terraform to init"
 	terraform init
@@ -8,5 +9,6 @@ init:
 		-platform=windows_amd64 \
 		-platform=darwin_arm64
 
+.PHONY: graph
 graph:
 	terraform graph | dot -Tpng > graph.png
