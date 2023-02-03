@@ -1,4 +1,5 @@
 # README
+## Short version in Japanese is [here](README.ja-short.md).
 
 ## Contents.
 - Local Development
@@ -15,7 +16,7 @@ gcloud auth login
 gcloud auth application-default login
 ```
 2. Install spanner-cli.  
-If you don't have 'go', you need to install the latest one.  
+If you don't have 'go' yet, you need to install the latest one.  
 https://go.dev/doc/install
 ```
 go install github.com/cloudspannerecosystem/spanner-cli@latest
