@@ -1,7 +1,7 @@
 FROM golang:1.19 AS builder
 
 WORKDIR /app
-COPY . .
+COPY *.go go.mod go.sum /app/
 RUN GGO_ENABLED=0 GOOS=linux go build -o main
 
 FROM debian:buster-slim AS runner
