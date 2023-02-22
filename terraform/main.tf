@@ -54,6 +54,18 @@ resource "google_spanner_instance" "test_instance" {
   ]
 }
 
+resource "google_spanner_database" "database" {
+  instance = google_spanner_instance.test_instance.name
+  name     = "game"
+  version_retention_period = "3d"
+  ddl = [
+  ]
+  deletion_protection = false
+  depends_on = [
+    google_spanner_instance.test_instance
+  ]
+}
+
 resource "google_cloud_run_service" "game_api" {
   name     = "game-api"
   provider = google-beta
