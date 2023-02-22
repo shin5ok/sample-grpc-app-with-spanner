@@ -1,0 +1,25 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+option go_package = "github.com/shin5ok/sample-grpc-app-with-spanner/pb";
+package grpcsampleapp;
+
+service Game {
+  rpc CreateUser(User) returns (User) {};
+  rpc GetUserItems(User) returns (stream Item) {};
+  rpc AddItemUser(UserItem) returns (google.protobuf.Empty) {};
+  rpc PingPong (google.protobuf.Empty) returns (google.protobuf.Empty) {};
+}
+
+message User {
+  string id = 1;
+  string name = 2;
+}
+
+message Item {
+  string id = 1;
+}
+
+message UserItem {
+  User user = 1;
+  Item item = 2;
+}

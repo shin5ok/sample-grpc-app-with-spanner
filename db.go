@@ -2,17 +2,18 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"time"
 
 	"cloud.google.com/go/spanner"
-	"google.golang.org/api/iterator"
+	"github.com/rs/zerolog/log"
 )
 
 type GameUserOperation interface {
 	createUser(context.Context, io.Writer, userParams) error
 	addItemToUser(context.Context, io.Writer, userParams, itemParams) error
-	userItems(context.Context, io.Writer, string) ([]map[string]interface{}, error)
+	userItems(context.Context, io.Writer, string) (*spanner.ReadOnlyTransaction, *spanner.RowIterator, error)
 }
 
 type userParams struct {
@@ -79,10 +80,12 @@ func (d dbClient) addItemToUser(ctx context.Context, w io.Writer, u userParams, 
 			"itemId":    i.itemID,
 			"timestamp": t,
 		}
+		log.Info().Msg(fmt.Sprintf("MAP> %#v", params))
 		stmtToUsers := spanner.Statement{
 			SQL:    sqlToUsers,
 			Params: params,
 		}
+		log.Info().Msg(fmt.Sprintf("SQL> %#v", stmtToUsers))
 		rowCountToUsers, err := txn.Update(ctx, stmtToUsers)
 		_ = rowCountToUsers
 		if err != nil {
@@ -94,13 +97,12 @@ func (d dbClient) addItemToUser(ctx context.Context, w io.Writer, u userParams, 
 }
 
 // get what items the user has
-func (d dbClient) userItems(ctx context.Context, w io.Writer, userID string) ([]map[string]interface{}, error) {
+func (d dbClient) userItems(ctx context.Context, w io.Writer, userID string) (*spanner.ReadOnlyTransaction, *spanner.RowIterator, error) {
 
 	txn := d.sc.ReadOnlyTransaction()
-	defer txn.Close()
-	sql := `select users.name,items.item_name,user_items.item_id
-		from user_items join items on items.item_id = user_items.item_id join users on users.user_id = user_items.user_id
-		where user_items.user_id = @user_id`
+	//defer txn.Close()
+	sql := `select users.name,items.item_name,user_items.item_id from user_items join items on items.item_id = user_items.item_id join users on users.user_id = user_items.user_id where user_items.user_id = @user_id`
+	// sql := `select users.name,items.item_name,user_items.item_id from user_items join items on items.item_id = user_items.item_id join users on users.user_id = user_items.user_id where user_items.user_id = 'e9144b60-02d8-44c5-9431-ca1c1dc80cdf'`
 	stmt := spanner.Statement{
 		SQL: sql,
 		Params: map[string]interface{}{
@@ -108,33 +110,9 @@ func (d dbClient) userItems(ctx context.Context, w io.Writer, userID string) ([]
 		},
 	}
 
+	log.Info().Msg(fmt.Sprintf("SQL: %#v", stmt))
+
 	iter := txn.Query(ctx, stmt)
-	defer iter.Stop()
+	return txn, iter, nil
 
-	results := []map[string]interface{}{}
-	for {
-		row, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return results, err
-		}
-		var userName string
-		var itemNames string
-		var itemIds string
-		if err := row.Columns(&userName, &itemNames, &itemIds); err != nil {
-			return results, err
-		}
-
-		results = append(results,
-			map[string]interface{}{
-				"user_name": userName,
-				"item_name": itemNames,
-				"item_id":   itemIds,
-			})
-
-	}
-
-	return results, nil
 }
