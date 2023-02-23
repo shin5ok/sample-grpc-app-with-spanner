@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.6.1
-// source: simple.proto
+// source: grpcsampleapp.proto
 
 package pb
 
@@ -236,5 +236,5 @@ var Game_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "simple.proto",
+	Metadata: "grpcsampleapp.proto",
 }
