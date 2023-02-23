@@ -104,9 +104,8 @@ func (s *newServerImplement) GetUserItems(user *pb.User, stream pb.Game_GetUserI
 			log.Err(err).Send()
 			return err
 		}
-		log.Info().Str("itemIds", itemIds).Send()
 
-		data := &pb.Item{Id: itemIds}
+		data := &pb.Item{Id: itemIds, Name: itemNames}
 		stream.Send(data)
 	}
 	return nil
