@@ -81,6 +81,9 @@ resource "google_cloud_run_service" "game_api" {
             memory = "1028M"
           }
         }
+        ports {
+          name = "h2c"
+        }
       }
       service_account_name = google_service_account.run_sa.email
     }
@@ -218,4 +221,8 @@ output "external_ip_attached_to_gclb" {
 
 output "cloud_run_embeded_url" {
   value = google_cloud_run_service.game_api.status[0].url
+}
+
+output "fqdn_should_be_pointing_to_external_ip" {
+  value = google_compute_managed_ssl_certificate.managed_cert.managed[0].domains[0]
 }
