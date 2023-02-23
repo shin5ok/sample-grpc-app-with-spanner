@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -57,10 +58,10 @@ func (s *newServerImplement) CreateUser(ctx context.Context, user *pb.User) (*pb
 	userId, _ := uuid.NewRandom()
 	userName := user.GetName()
 
-	w := os.Stdout
-	s.Client.createUser(ctx, w, userParams{userID: userId.String(), userName: userName})
+	w := io.Discard
+	err := s.Client.createUser(ctx, w, userParams{userID: userId.String(), userName: userName})
 
-	return &pb.User{Name: userName, Id: userId.String()}, nil
+	return &pb.User{Name: userName, Id: userId.String()}, err
 }
 
 func (s *newServerImplement) AddItemUser(ctx context.Context, userItem *pb.UserItem) (*empty.Empty, error) {
@@ -70,14 +71,14 @@ func (s *newServerImplement) AddItemUser(ctx context.Context, userItem *pb.UserI
 		Str("arg", fmt.Sprintf("%+v", fmt.Sprintf("%+v", userItem))).
 		Send()
 
-	w := os.Stdout
+	w := io.Discard
 	s.Client.addItemToUser(ctx, w, userParams{userID: userItem.User.Id}, itemParams{itemID: userItem.Item.Id})
 
 	return &emptypb.Empty{}, nil
 }
 
 func (s *newServerImplement) GetUserItems(user *pb.User, stream pb.Game_GetUserItemsServer) error {
-	w := os.Stdout
+	w := io.Discard
 	ctx := context.Background()
 	txn, iter, err := s.Client.userItems(ctx, w, user.GetId())
 	if err != nil {

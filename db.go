@@ -2,12 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"time"
 
 	"cloud.google.com/go/spanner"
-	"github.com/rs/zerolog/log"
 )
 
 type GameUserOperation interface {
@@ -80,12 +78,10 @@ func (d dbClient) addItemToUser(ctx context.Context, w io.Writer, u userParams, 
 			"itemId":    i.itemID,
 			"timestamp": t,
 		}
-		log.Info().Msg(fmt.Sprintf("MAP> %#v", params))
 		stmtToUsers := spanner.Statement{
 			SQL:    sqlToUsers,
 			Params: params,
 		}
-		log.Info().Msg(fmt.Sprintf("SQL> %#v", stmtToUsers))
 		rowCountToUsers, err := txn.Update(ctx, stmtToUsers)
 		_ = rowCountToUsers
 		if err != nil {
@@ -101,16 +97,16 @@ func (d dbClient) userItems(ctx context.Context, w io.Writer, userID string) (*s
 
 	txn := d.sc.ReadOnlyTransaction()
 	//defer txn.Close()
-	sql := `select users.name,items.item_name,user_items.item_id from user_items join items on items.item_id = user_items.item_id join users on users.user_id = user_items.user_id where user_items.user_id = @user_id`
-	// sql := `select users.name,items.item_name,user_items.item_id from user_items join items on items.item_id = user_items.item_id join users on users.user_id = user_items.user_id where user_items.user_id = 'e9144b60-02d8-44c5-9431-ca1c1dc80cdf'`
+	sql := `select users.name,items.item_name,user_items.item_id from user_items 
+		join items on items.item_id = user_items.item_id 
+		join users on users.user_id = user_items.user_id 
+		where user_items.user_id = @user_id`
 	stmt := spanner.Statement{
 		SQL: sql,
 		Params: map[string]interface{}{
 			"user_id": userID,
 		},
 	}
-
-	log.Info().Msg(fmt.Sprintf("SQL: %#v", stmt))
 
 	iter := txn.Query(ctx, stmt)
 	return txn, iter, nil
