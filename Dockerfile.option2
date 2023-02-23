@@ -1,10 +1,11 @@
-FROM golang:1.19 AS builder
-
+FROM golang:1.20 AS builder
 WORKDIR /app
+COPY pb /app/pb/
 COPY *.go go.mod go.sum /app/
-RUN GGO_ENABLED=0 GOOS=linux go build -o main
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main
 
-FROM debian:buster-slim AS runner
+# use smaller one
+FROM golang:1.20 AS runner
 COPY --from=builder /app/main /main
-USER nobody
+# USER nobody
 CMD ["/main"]
