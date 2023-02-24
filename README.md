@@ -86,12 +86,15 @@ Prepare database.
 gcloud spanner databases create --instance test-instance game
 ```
 Additionally create schemas and initial data.
+
+- Create schemas
 ```
 for schema in ./schemas/*_ddl.sql;
 do
     spanner-cli -p $GOOGLE_CLOUD_PROJECT -i test-instance -d game < $schema
 done
 ```
+- Add initial data to 'items'
 ```
 spanner-cli -p $GOOGLE_CLOUD_PROJECT -i test-instance -d game < ./schemas/40-create_item_records_dml.sql
 ```
@@ -166,11 +169,16 @@ Run some command as below,
 gcloud spanner databases create --instance test-instance game
 ```
 5-2. Additionally create schemas and initial data.
+- Create schemas
 ```
-for schema in ./schemas/*.sql;
+for schema in ./schemas/*_ddl.sql;
 do
     spanner-cli -p $GOOGLE_CLOUD_PROJECT -i test-instance -d game < $schema
 done
+```
+- Add initial data to 'items'
+```
+spanner-cli -p $GOOGLE_CLOUD_PROJECT -i test-instance -d game < ./schemas/40-create_item_records_dml.sql
 ```
 
 5-3. You can use spanner-cli to confirm schema and data in the Cloud Spanner instance.
