@@ -33,7 +33,7 @@ export PRODUCTION_PROJECT=$GOOGLE_CLOUD_PROJECT
 
 4. Clone this code to your local.
 ```
-git clone https://github.com/shin5ok/egg6-architecting
+git clone https://github.com/shin5ok/sample-grpc-app-with-spanner.git
 ```
 
 ## Local development
@@ -113,6 +113,7 @@ show create table users_items;
 show create table items;
 select * from items;
 ```
+exit spanner-cli shell.
 
 8. Test it as local app.
 Run it locally.
@@ -122,12 +123,16 @@ PORT=8080 go run .
 ```
 9. Test it.
 Test it with some utils such as grpcurl, grpc_cli and evans.
+For instance when you use evans, the command could be like,
+```
+evans -r --host localhost --port 8080
+```
 
 ## Deploy the app to Google Cloud
 
 1. Switch profile to Production project.
 ```
-gcloud config configurations create egg6-3
+gcloud config configurations create my-production
 gcloud config set project $PRODUCTION_PROJECT
 ```
 Run this command in your shell, just in case.
@@ -191,7 +196,7 @@ spanner-cli -i test-instance -p $GOOGLE_CLOUD_PROJECT -d game
 ```
 gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
 --set-env-vars=SPANNER_STRING=$SPANNER_STRING \
---service-account=$SA --source=.
+--service-account=$SA --source=. --use-http2
 ```
 - Option2: With Dockerfile as the general way  
   Create a repo on Artifact Registory and grant push on local env.  
@@ -210,14 +215,17 @@ docker push $IMAGE
 ```
 gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
 --set-env-vars=SPANNER_STRING=$SPANNER_STRING \
---service-account=$SA --image $IMAGE
+--service-account=$SA --image $IMAGE --use-http2
 ```
 
 7. Congratulation!!  
 Just test it, like on local.  
-Of course you need to specify the actual url instead of "http://localhost:8080".  
-The url the Cloud Run service was assigned to would be like this "https://game-api-xxxxxxxxx-xx.a.run.app".
-
+Of course you need to specify the actual host instead of "localhost:8080".  
+The url the Cloud Run service was assigned to would be like this "game-api-xxxxxxxxx-xx.a.run.app", which you can find the FQDN part from url.
+For instance when you use evans, the command could be like,
+```
+evans -r --host game-api-xxxxxxxx-xx.a.run.app -t --port 443
+```
 
 ## Transfer logging to Google BigQuery
 
@@ -268,7 +276,8 @@ gcloud compute network-endpoint-groups create game-api \
 ```
 gcloud compute backend-services create backend-for-game-api \
     --load-balancing-scheme=EXTERNAL \
-    --global
+    --global \
+    --protocol=HTTP2
 ```
 And register the Serverless NEG to it.
 ```
