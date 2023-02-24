@@ -277,7 +277,7 @@ gcloud compute network-endpoint-groups create game-api \
 gcloud compute backend-services create backend-for-game-api \
     --load-balancing-scheme=EXTERNAL \
     --global \
-    --protocol=HTTP2
+    --protocol=HTTP2 --port-name=http
 ```
 And register the Serverless NEG to it.
 ```
