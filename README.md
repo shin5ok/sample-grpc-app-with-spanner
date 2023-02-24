@@ -1,5 +1,4 @@
 # README
-## Short version in Japanese is [here](README.ja-short.md).
 
 ## Contents.
 - Local Development
