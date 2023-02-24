@@ -88,10 +88,13 @@ gcloud spanner databases create --instance test-instance game
 ```
 Additionally create schemas and initial data.
 ```
-for schema in ./schemas/*.sql;
+for schema in ./schemas/*_ddl.sql;
 do
     spanner-cli -p $GOOGLE_CLOUD_PROJECT -i test-instance -d game < $schema
 done
+```
+```
+spanner-cli -p $GOOGLE_CLOUD_PROJECT -i test-instance -d game < ./schemas/40-create_item_records_dml.sql
 ```
 
 
@@ -116,32 +119,7 @@ export SPANNER_STRING=projects/$GOOGLE_CLOUD_PROJECT/instances/test-instance/dat
 PORT=8080 go run .
 ```
 9. Test it.
-- Check if the api server is alive
-```
-curl http://localhost:8080/ping
-```
-- Create a user
-```
-curl http://localhost:8080/api/user/foo -X POST
-```
-Note the id that you found in response.  
-The id might be like 516c3e80-5c15-11ed-8506-071d4abd8d4a.
-- Add an item to the user
-```
-USER_ID=<your user id>
-ITEM_ID=d169f397-ba3f-413b-bc3c-a465576ef06e
-curl http://localhost:8080/api/user_id/$USER_ID/$ITEM_ID -X PUT
-```
-
-- Get all items that belongs to the user
-```
-curl http://localhost:8080/api/user_id/$USER_ID -X GET
-```
-
-- Run test it totally
-```
-go test -v
-```
+Test it with some utils such as grpcurl, grpc_cli and evans.
 
 ## Deploy the app to Google Cloud
 
