@@ -33,7 +33,7 @@ export PRODUCTION_PROJECT=$GOOGLE_CLOUD_PROJECT
 
 4. Clone this code to your local.
 ```
-git clone https://github.com/shin5ok/egg6-architecting
+git clone https://github.com/shin5ok/sample-grpc-app-with-spanner.git
 ```
 
 ## Local development
