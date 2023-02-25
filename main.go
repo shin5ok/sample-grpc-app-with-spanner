@@ -82,7 +82,7 @@ func (s *newServerImplement) AddItemUser(ctx context.Context, userItem *pb.UserI
 	w := io.Discard
 	err := s.Client.addItemToUser(ctx, w, userParams{userID: userItem.User.Id}, itemParams{itemID: userItem.Item.Id})
 	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
+		return nil, status.Error(codes.Aborted, err.Error())
 	}
 
 	return &emptypb.Empty{}, nil
