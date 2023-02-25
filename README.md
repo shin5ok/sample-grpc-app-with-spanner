@@ -121,8 +121,9 @@ Run it locally.
 export SPANNER_STRING=projects/$GOOGLE_CLOUD_PROJECT/instances/test-instance/databases/game
 PORT=8080 go run .
 ```
+
 9. Test it.
-Test it with some utils such as grpcurl, grpc_cli and evans.
+Test it with some utils such as [grpcurl](https://github.com/fullstorydev/grpcurl), [grpc_cli](https://github.com/grpc/grpc/blob/master/doc/command_line_tool.md) and [evans](https://github.com/ktr0731/evans).
 For instance when you use evans, the command could be like,
 ```
 evans -r --host localhost --port 8080
@@ -192,7 +193,8 @@ spanner-cli -i test-instance -p $GOOGLE_CLOUD_PROJECT -d game
 ```
 
 6. Deploy a Cloud Run service.
-- Option1: With buildpacks
+- Option1: With buildpacks  
+You can build container without Dockerfile and deploy it to Cloud Run.
 ```
 gcloud run deploy game-api --allow-unauthenticated --region=asia-northeast1 \
 --set-env-vars=SPANNER_STRING=$SPANNER_STRING \
