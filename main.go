@@ -55,9 +55,13 @@ func (s *newServerImplement) CreateUser(ctx context.Context, user *pb.User) (*pb
 		Str("arg", fmt.Sprintf("%+v", fmt.Sprintf("%+v", user))).
 		Send()
 
-	userId, _ := uuid.NewRandom()
 	userName := user.GetName()
 
+	if userName == "" {
+		return nil, status.Error(codes.InvalidArgument, "user name is empty")
+	}
+
+	userId, _ := uuid.NewRandom()
 	w := io.Discard
 	err := s.Client.createUser(ctx, w, userParams{userID: userId.String(), userName: userName})
 
@@ -71,8 +75,15 @@ func (s *newServerImplement) AddItemUser(ctx context.Context, userItem *pb.UserI
 		Str("arg", fmt.Sprintf("%+v", fmt.Sprintf("%+v", userItem))).
 		Send()
 
+	if userItem.User.Id == "" || userItem.Item.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "user id or/and itemid is/are empty")
+	}
+
 	w := io.Discard
-	s.Client.addItemToUser(ctx, w, userParams{userID: userItem.User.Id}, itemParams{itemID: userItem.Item.Id})
+	err := s.Client.addItemToUser(ctx, w, userParams{userID: userItem.User.Id}, itemParams{itemID: userItem.Item.Id})
+	if err != nil {
+		return nil, status.Error(codes.Unavailable, err.Error())
+	}
 
 	return &emptypb.Empty{}, nil
 }
@@ -88,6 +99,7 @@ func (s *newServerImplement) GetUserItems(user *pb.User, stream pb.Game_GetUserI
 	defer iter.Stop()
 	defer txn.Close()
 
+	var records_number int
 	for {
 		row, err := iter.Next()
 		if err == iterator.Done {
@@ -102,12 +114,22 @@ func (s *newServerImplement) GetUserItems(user *pb.User, stream pb.Game_GetUserI
 		var itemIds string
 		if err := row.Columns(&userName, &itemNames, &itemIds); err != nil {
 			log.Err(err).Send()
-			return err
+			return status.Error(codes.Unavailable, "columns bind error")
 		}
 
 		data := &pb.Item{Id: itemIds, Name: itemNames}
-		stream.Send(data)
+
+		if err := stream.Send(data); err != nil {
+			return status.Error(codes.Unavailable, err.Error())
+		}
+		records_number++
 	}
+
+	if records_number == 0 {
+		message := fmt.Sprintf("row count %d: not found", iter.RowCount)
+		return status.Error(codes.NotFound, message)
+	}
+
 	return nil
 
 }
