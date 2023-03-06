@@ -9,9 +9,16 @@ import (
 	"os"
 	"time"
 
+	texporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace"
 	"github.com/golang/protobuf/ptypes/empty"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/detectors/gcp"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 
 	pb "github.com/shin5ok/sample-grpc-app-with-spanner/pb"
 
@@ -142,15 +149,26 @@ func main() {
 	serverLogger := log.Level(zerolog.TraceLevel)
 	grpc_zerolog.ReplaceGrpcLogger(zerolog.New(os.Stderr).Level(zerolog.ErrorLevel))
 
+	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+
+	tp := tpExporter(projectID, "sample")
+	ctx := context.Background()
+	defer tp.ForceFlush(ctx)
+	otel.SetTracerProvider(tp)
+
+	interceptorOpt := otelgrpc.WithTracerProvider(otel.GetTracerProvider())
+
 	server := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			grpc_zerolog.NewPayloadUnaryServerInterceptor(serverLogger),
 			grpc_prometheus.UnaryServerInterceptor,
+			otelgrpc.UnaryServerInterceptor(interceptorOpt),
 		),
 		grpc.ChainStreamInterceptor(
 			grpc_zerolog.NewStreamServerInterceptor(serverLogger),
 			grpc_prometheus.StreamServerInterceptor,
 			grpc_zerolog.NewPayloadStreamServerInterceptor(serverLogger),
+			otelgrpc.StreamServerInterceptor(interceptorOpt),
 		),
 	)
 
@@ -164,7 +182,6 @@ func main() {
 	}
 
 	newServer := newServerImplement{}
-	ctx := context.Background()
 	spannerClient, err := newClient(ctx, dbString)
 	if err != nil {
 		panic(err)
@@ -200,4 +217,31 @@ func (h *healthCheck) Check(context.Context, *health.HealthCheckRequest) (*healt
 
 func (h *healthCheck) Watch(*health.HealthCheckRequest, health.Health_WatchServer) error {
 	return status.Error(codes.Unimplemented, "No implementation for Watch")
+}
+
+func tpExporter(projectID, serviceName string) *sdktrace.TracerProvider {
+	exporter, err := texporter.New(texporter.WithProjectID(projectID))
+	if err != nil {
+		log.Err(err).Send()
+		return nil
+	}
+
+	ctx := context.Background()
+	res, err := resource.New(ctx,
+		resource.WithDetectors(gcp.NewDetector()),
+		resource.WithTelemetrySDK(),
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String(serviceName),
+		),
+	)
+	if err != nil {
+		log.Err(err).Send()
+		return nil
+	}
+
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(res),
+	)
+	return tp
 }
