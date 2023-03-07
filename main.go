@@ -19,6 +19,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
+	"go.opentelemetry.io/otel/trace"
 
 	pb "github.com/shin5ok/sample-grpc-app-with-spanner/pb"
 
@@ -40,6 +41,9 @@ var appPort = "8080"
 var promPort = "18080"
 
 var dbString = os.Getenv("SPANNER_STRING")
+var domain = os.Getenv("DOMAIN")
+
+var tracer trace.Tracer
 
 type healthCheck struct{}
 
@@ -70,7 +74,12 @@ func (s *newServerImplement) CreateUser(ctx context.Context, user *pb.User) (*pb
 
 	userId, _ := uuid.NewRandom()
 	w := io.Discard
+
+	ctx, span := tracer.Start(ctx, "create user into Cloud Spanner")
+	defer span.End()
+
 	err := s.Client.createUser(ctx, w, userParams{userID: userId.String(), userName: userName})
+	span.End()
 
 	return &pb.User{Name: userName, Id: userId.String()}, err
 }
@@ -155,6 +164,8 @@ func main() {
 	ctx := context.Background()
 	defer tp.ForceFlush(ctx)
 	otel.SetTracerProvider(tp)
+
+	tracer = otel.GetTracerProvider().Tracer(domain)
 
 	interceptorOpt := otelgrpc.WithTracerProvider(otel.GetTracerProvider())
 
