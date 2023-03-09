@@ -35,6 +35,10 @@ export PRODUCTION_PROJECT=$GOOGLE_CLOUD_PROJECT
 ```
 git clone https://github.com/shin5ok/sample-grpc-app-with-spanner.git
 ```
+and then
+```
+cd your-cloned-directory/
+```
 
 ## Local development
 
