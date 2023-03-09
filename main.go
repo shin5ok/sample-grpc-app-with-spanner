@@ -150,7 +150,7 @@ func (s *newServerImplement) GetUserItems(user *pb.User, stream pb.Game_GetUserI
 
 }
 
-func (n *newServerImplement) PingPong(ctx context.Context, e *empty.Empty) (*empty.Empty, error) {
+func (n *newServerImplement) PingPong(ctx context.Context, _ *empty.Empty) (*empty.Empty, error) {
 	return &emptypb.Empty{}, nil
 }
 
@@ -255,4 +255,19 @@ func tpExporter(projectID, serviceName string) *sdktrace.TracerProvider {
 		sdktrace.WithResource(res),
 	)
 	return tp
+}
+
+func (s *newServerImplement) ListItems(ctx context.Context, _ *empty.Empty) (*pb.Items, error) {
+	data, err := s.Client.listItems(ctx)
+	if err != nil {
+		log.Err(err).Send()
+		return &pb.Items{}, err
+	}
+	// Just for temporary
+	// TODO: use def of protobuf directly
+	items := []*pb.Item{}
+	for _, v := range data {
+		items = append(items, &pb.Item{Id: v.itemID})
+	}
+	return &pb.Items{Items: items}, err
 }

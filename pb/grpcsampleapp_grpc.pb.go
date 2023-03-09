@@ -27,6 +27,7 @@ type GameClient interface {
 	GetUserItems(ctx context.Context, in *User, opts ...grpc.CallOption) (Game_GetUserItemsClient, error)
 	AddItemUser(ctx context.Context, in *UserItem, opts ...grpc.CallOption) (*empty.Empty, error)
 	PingPong(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*empty.Empty, error)
+	ListItems(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Items, error)
 }
 
 type gameClient struct {
@@ -96,6 +97,15 @@ func (c *gameClient) PingPong(ctx context.Context, in *empty.Empty, opts ...grpc
 	return out, nil
 }
 
+func (c *gameClient) ListItems(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Items, error) {
+	out := new(Items)
+	err := c.cc.Invoke(ctx, "/grpcsampleapp.Game/ListItems", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GameServer is the server API for Game service.
 // All implementations should embed UnimplementedGameServer
 // for forward compatibility
@@ -104,6 +114,7 @@ type GameServer interface {
 	GetUserItems(*User, Game_GetUserItemsServer) error
 	AddItemUser(context.Context, *UserItem) (*empty.Empty, error)
 	PingPong(context.Context, *empty.Empty) (*empty.Empty, error)
+	ListItems(context.Context, *empty.Empty) (*Items, error)
 }
 
 // UnimplementedGameServer should be embedded to have forward compatible implementations.
@@ -121,6 +132,9 @@ func (UnimplementedGameServer) AddItemUser(context.Context, *UserItem) (*empty.E
 }
 func (UnimplementedGameServer) PingPong(context.Context, *empty.Empty) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PingPong not implemented")
+}
+func (UnimplementedGameServer) ListItems(context.Context, *empty.Empty) (*Items, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListItems not implemented")
 }
 
 // UnsafeGameServer may be embedded to opt out of forward compatibility for this service.
@@ -209,6 +223,24 @@ func _Game_PingPong_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Game_ListItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GameServer).ListItems(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpcsampleapp.Game/ListItems",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GameServer).ListItems(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Game_ServiceDesc is the grpc.ServiceDesc for Game service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -227,6 +259,10 @@ var Game_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PingPong",
 			Handler:    _Game_PingPong_Handler,
+		},
+		{
+			MethodName: "ListItems",
+			Handler:    _Game_ListItems_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
