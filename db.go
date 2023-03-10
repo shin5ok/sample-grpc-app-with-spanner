@@ -6,14 +6,13 @@ import (
 	"time"
 
 	"cloud.google.com/go/spanner"
-	"google.golang.org/api/iterator"
 )
 
 type GameUserOperation interface {
 	createUser(context.Context, io.Writer, userParams) error
 	addItemToUser(context.Context, io.Writer, userParams, itemParams) error
 	userItems(context.Context, io.Writer, string) (*spanner.ReadOnlyTransaction, *spanner.RowIterator, error)
-	listItems(context.Context) ([]itemParams, error)
+	listItems(context.Context) (*spanner.ReadOnlyTransaction, *spanner.RowIterator, error)
 }
 
 type userParams struct {
@@ -114,30 +113,14 @@ func (d dbClient) userItems(ctx context.Context, w io.Writer, userID string) (*s
 
 }
 
-func (d dbClient) listItems(ctx context.Context) ([]itemParams, error) {
+func (d dbClient) listItems(ctx context.Context) (*spanner.ReadOnlyTransaction, *spanner.RowIterator, error) {
 
 	txn := d.sc.ReadOnlyTransaction()
-	defer txn.Close()
 	sql := `select item_id,item_name from items`
 	stmt := spanner.Statement{
 		SQL: sql,
 	}
 	iter := d.sc.Single().Query(ctx, stmt)
-	defer iter.Stop()
 
-	items := []itemParams{}
-	for {
-		row, err := iter.Next()
-		if err == iterator.Done {
-			return items, nil
-		}
-		if err != nil {
-			return items, err
-		}
-		var itemID, itemName string
-		if err := row.Columns(&itemID, &itemName); err != nil {
-			return items, err
-		}
-		items = append(items, itemParams{itemID: itemID})
-	}
+	return txn, iter, nil
 }

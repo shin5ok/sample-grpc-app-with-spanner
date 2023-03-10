@@ -151,18 +151,29 @@ func (s *newServerImplement) GetUserItems(user *pb.User, stream pb.Game_GetUserI
 }
 
 func (s *newServerImplement) ListItems(ctx context.Context, _ *empty.Empty) (*pb.Items, error) {
-	data, err := s.Client.listItems(ctx)
+	txn, iter, err := s.Client.listItems(ctx)
 	if err != nil {
 		log.Err(err).Send()
 		return &pb.Items{}, err
 	}
-	// Just for temporary!
-	// TODO: use def of protobuf directly
+	defer txn.Close()
+	defer iter.Stop()
 	items := []*pb.Item{}
-	for _, v := range data {
-		items = append(items, &pb.Item{Id: v.itemID})
+
+	for {
+		row, err := iter.Next()
+		if err == iterator.Done {
+			return &pb.Items{Items: items}, nil
+		}
+		if err != nil {
+			return &pb.Items{}, status.Error(codes.Unavailable, err.Error())
+		}
+		var itemID, itemName string
+		if err := row.Columns(&itemID, &itemName); err != nil {
+			return &pb.Items{}, status.Error(codes.Internal, err.Error())
+		}
+		items = append(items, &pb.Item{Id: itemID, Name: itemName})
 	}
-	return &pb.Items{Items: items}, err
 }
 
 func (n *newServerImplement) PingPong(ctx context.Context, _ *empty.Empty) (*empty.Empty, error) {
