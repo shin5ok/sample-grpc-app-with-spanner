@@ -1,7 +1,7 @@
 # README
 ## Note
 This repo was intended just to **make sure how gRPC API server with Cloud Spanner works**.  
-It was implemented based on this [REST API](https://github.com/shin5ok/egg6-architecting) for the moment, so maybe NOT efficient coding.
+That has been implemented based on this [REST API](https://github.com/shin5ok/egg6-architecting) for the moment, so maybe NOT efficient coding.
 
 ## Contents.
 - Local Development
