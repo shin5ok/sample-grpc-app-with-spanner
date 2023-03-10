@@ -153,6 +153,7 @@ unset SPANNER_EMULATOR_HOST
 2. Enable services you will use.
 ```
 gcloud services enable \
+compute.googleapis.com \
 spanner.googleapis.com \
 run.googleapis.com \
 cloudbuild.googleapis.com \
